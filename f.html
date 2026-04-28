@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Secure Online Exam</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; background: #f4f4f9; padding: 20px; }
+        #exam-area { display: none; }
+        #timer { font-size: 24px; color: red; font-weight: bold; margin-bottom: 20px; }
+        #question-box { width: 90%; max-width: 800px; margin: 0 auto; border: 2px solid #333; padding: 10px; }
+    </style>
+</head>
+<body>
+
+    <div id="start-screen">
+        <h1>Online Examination</h1>
+        <p>Instructions: Exam chalu hone ke baad tab switch karna ya window minimize karna mana hai.</p>
+        <button onclick="startExam()" style="padding: 15px 30px; font-size: 18px; cursor: pointer;">Start Exam</button>
+    </div>
+
+    <div id="exam-area">
+        <div id="timer">Time Left: 01:30:00</div>
+        
+        <div id="question-box">
+            <img src="YOUR_QUESTION_IMAGE_URL.jpg" alt="Question Paper" style="width: 100%;">
+        </div>
+        
+        <br><br>
+        <button onclick="submitExam()" style="padding: 12px 25px; background: green; color: white; border: none; cursor: pointer;">Submit Exam</button>
+    </div>
+
+    <script>
+        let trackingData = [];
+        let timeLeft = 90 * 60; // 90 minutes in seconds
+        let examActive = false;
+
+        function startExam() {
+            // Fullscreen enable
+            document.documentElement.requestFullscreen();
+            
+            document.getElementById('start-screen').style.display = 'none';
+            document.getElementById('exam-area').style.display = 'block';
+            examActive = true;
+            
+            // Timer start
+            let timerInterval = setInterval(() => {
+                timeLeft--;
+                let minutes = Math.floor(timeLeft / 60);
+                let seconds = timeLeft % 60;
+                document.getElementById('timer').innerText = `Time Left: ${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    submitExam();
+                }
+            }, 1000);
+        }
+
+        // --- Tracking Logic (Blur & Tab Switch) ---
+        function logEvent(event) {
+            let timestamp = new Date().toLocaleTimeString();
+            trackingData.push({ action: event, time: timestamp });
+            console.log("Logged:", event);
+        }
+
+        window.addEventListener("blur", () => { if(examActive) logEvent("Focus Lost/Blur"); });
+        document.addEventListener("visibilitychange", () => { 
+            if(examActive && document.hidden) logEvent("Tab Switched/Hidden"); 
+        });
+
+        // --- Submit Logic ---
+        function submitExam() {
+            if(!examActive) return;
+            examActive = false;
+            
+            // UI Hide
+            document.body.innerHTML = "<h1>Exam Finished!</h1><p>Downloading your tracking report...</p>";
+            
+            // Data to Text File
+            let report = "--- Exam Tracking Report ---\n";
+            report += "Student Activity Log:\n" + JSON.stringify(trackingData, null, 2);
+            
+            let blob = new Blob([report], { type: "text/plain" });
+            let url = URL.createObjectURL(blob);
+            
+            // Auto-Download
+            let a = document.createElement('a');
+            a.href = url;
+            a.download = "Tracking_Report.txt";
+            document.body.appendChild(a);
+            a.click();
+            
+            alert("Exam submit ho gaya hai. Report download ho gayi hai, ise WhatsApp par share kar dein.");
+        }
+    </script>
+</body>
+</html>
