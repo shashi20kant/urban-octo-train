@@ -6,117 +6,100 @@
     <title>Secure Exam Portal</title>
     <style>
         * { box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; margin: 0; padding: 20px; text-align: center; }
+        body { font-family: sans-serif; background: #f0f2f5; margin: 0; padding: 20px; text-align: center; }
         
         #start-screen { max-width: 450px; margin: 80px auto; background: white; padding: 40px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+        #exam-area { display: none; width: 100%; max-width: 700px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; }
         
-        #exam-area { display: none; width: 100%; max-width: 700px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        
-        #header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 15px; margin-bottom: 20px; }
-        
-        #timer { font-size: 20px; color: #d32f2f; font-weight: bold; background: #ffebee; padding: 8px 15px; border-radius: 6px; }
-        
-        img { width: 100%; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 20px; }
-        
-        button { background: #2563eb; color: white; border: none; padding: 15px 30px; border-radius: 8px; font-size: 16px; cursor: pointer; width: 100%; transition: 0.3s; }
-        button:hover { background: #1d4ed8; }
-        .submit-btn { background: #059669; }
-        .submit-btn:hover { background: #047857; }
+        /* Security Block Overlay */
+        #block-overlay { 
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.95); color: white; z-index: 9999; padding-top: 20%;
+        }
+        @media (max-aspect-ratio: 9/16) { #block-overlay { display: block !important; } }
+
+        #timer { font-size: 24px; color: #d32f2f; font-weight: bold; margin-bottom: 10px; }
+        img { width: 100%; border-radius: 8px; margin-bottom: 20px; }
+        button { background: #2563eb; color: white; border: none; padding: 15px 30px; border-radius: 8px; font-size: 16px; cursor: pointer; width: 100%; }
     </style>
 </head>
 <body>
 
+    <div id="block-overlay">
+        <h1>SECURITY ALERT</h1>
+        <p>Multiple screen ya Split-screen allow nahi hai!</p>
+    </div>
+
     <div id="start-screen">
         <h2>Online Examination</h2>
-        <p>Instructions: Exam shuru hone ke baad window switch ya split-screen par dusri app use karna mana hai.</p>
         <button onclick="startExam()">Start Exam</button>
     </div>
 
     <div id="exam-area">
-        <div id="header">
-            <strong>Question Paper</strong>
-            <div id="timer">01:30:00</div>
-        </div>
-        
+        <div id="timer">01:30:00</div>
         <img src="YOUR_QUESTION_IMAGE_URL.jpg" alt="Question Paper">
-        
-        <button class="submit-btn" onclick="submitExam()">Submit Exam</button>
+        <button onclick="submitExam()">Submit Exam</button>
     </div>
 
     <script>
         let trackingData = [];
-        let startTime, endTime;
-        let timeLeft = 90 * 60; // 90 Minutes
-        let examActive = false;
-        let isAway = false;
-        let awayStartTime = null;
+        let examActive = false, isAway = false, awayStartTime = null;
+        let timeLeft = 90 * 60; // 90 Minutes in seconds
 
         function startExam() {
             document.documentElement.requestFullscreen();
             document.getElementById('start-screen').style.display = 'none';
             document.getElementById('exam-area').style.display = 'block';
-            
-            startTime = new Date();
             examActive = true;
-            
-            // Timer & Activity Monitoring
+            startTimer();
+        }
+
+        function startTimer() {
+            let timerDisplay = document.getElementById('timer');
             let timerInterval = setInterval(() => {
                 if (!examActive) return clearInterval(timerInterval);
                 
                 timeLeft--;
                 let m = Math.floor(timeLeft / 60);
                 let s = timeLeft % 60;
-                document.getElementById('timer').innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
+                timerDisplay.innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
                 
                 if (timeLeft <= 0) submitExam();
-
-                // Tracking Focus (Split screen/Other app interaction)
-                if (!document.hasFocus()) {
-                    if (!isAway) {
-                        isAway = true;
-                        awayStartTime = new Date();
-                        logEvent("Focus Lost (User clicked other window/split-screen)");
-                    }
-                } else if (isAway) {
-                    let duration = Math.round((new Date() - awayStartTime) / 1000);
-                    logEvent(`Returned to exam after ${duration} seconds`);
-                    isAway = false;
-                }
             }, 1000);
         }
 
+        // Monitoring Logic (Har 1 sec me check)
+        setInterval(() => {
+            if (!examActive) return;
+
+            if (!document.hasFocus()) {
+                if (!isAway) {
+                    isAway = true;
+                    awayStartTime = new Date();
+                    logEvent("Focus Lost (Moved to another screen)");
+                }
+            } else if (isAway) {
+                let duration = Math.round((new Date() - awayStartTime) / 1000);
+                logEvent(`Returned to exam. Away for: ${duration} seconds`);
+                isAway = false;
+            }
+        }, 1000);
+
         function logEvent(action) {
             trackingData.push({ action: action, time: new Date().toLocaleTimeString() });
+            console.log("Logged:", action);
         }
-
-        window.addEventListener("blur", () => {
-            if (examActive && !isAway) {
-                isAway = true;
-                awayStartTime = new Date();
-                logEvent("Window Switch/Blur detected");
-            }
-        });
 
         function submitExam() {
             if(!examActive) return;
             examActive = false;
-            endTime = new Date();
-
-            let totalDuration = Math.round((endTime - startTime) / 60000);
-            
-            let report = `--- Exam Tracking Report ---\n`;
-            report += `Start Time: ${startTime.toLocaleTimeString()}\n`;
-            report += `End Time: ${endTime.toLocaleTimeString()}\n`;
-            report += `Total Exam Duration: ${totalDuration} minutes\n\n`;
-            report += `Detailed Activity Logs:\n` + JSON.stringify(trackingData, null, 2);
-            
+            let report = "Exam Tracking Data:\n" + JSON.stringify(trackingData, null, 2);
             let blob = new Blob([report], { type: "text/plain" });
             let a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
             a.download = "Exam_Report_" + new Date().getTime() + ".txt";
             a.click();
-            
-            document.body.innerHTML = "<h1 style='padding-top:100px;'>Exam Submitted!</h1><p>Report download ho gayi hai, ise WhatsApp par share karein.</p>";
+            alert("Exam Submitted!");
         }
     </script>
 </body>
