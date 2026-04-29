@@ -2,105 +2,100 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Secure Exam Portal</title>
+    <title>Secure Exam System</title>
     <style>
-        * { box-sizing: border-box; }
         body { font-family: sans-serif; background: #f0f2f5; margin: 0; padding: 20px; text-align: center; }
+        #exam-area { display: none; width: 100%; max-width: 600px; margin: auto; }
         
-        #start-screen { max-width: 450px; margin: 80px auto; background: white; padding: 40px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
-        #exam-area { display: none; width: 100%; max-width: 700px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; }
-        
-        /* Security Block Overlay */
-        #block-overlay { 
+        /* White-out Layer */
+        #white-out-screen { 
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.95); color: white; z-index: 9999; padding-top: 20%;
+            background: white; z-index: 999999; 
         }
-        @media (max-aspect-ratio: 9/16) { #block-overlay { display: block !important; } }
-
-        #timer { font-size: 24px; color: #d32f2f; font-weight: bold; margin-bottom: 10px; }
-        img { width: 100%; border-radius: 8px; margin-bottom: 20px; }
+        
+        #timer { font-size: 28px; color: #d32f2f; font-weight: bold; margin-bottom: 20px; }
         button { background: #2563eb; color: white; border: none; padding: 15px 30px; border-radius: 8px; font-size: 16px; cursor: pointer; width: 100%; }
     </style>
 </head>
 <body>
 
-    <div id="block-overlay">
-        <h1>SECURITY ALERT</h1>
-        <p>Multiple screen ya Split-screen allow nahi hai!</p>
-    </div>
+    <div id="white-out-screen"></div>
 
     <div id="start-screen">
-        <h2>Online Examination</h2>
+        <h1>Online Examination</h1>
         <button onclick="startExam()">Start Exam</button>
     </div>
 
     <div id="exam-area">
-        <div id="timer">01:30:00</div>
-        <img src="YOUR_QUESTION_IMAGE_URL.jpg" alt="Question Paper">
+        <div id="timer">90:00</div>
+        <img src="YOUR_QUESTION_IMAGE_URL.jpg" style="width: 100%;">
         <button onclick="submitExam()">Submit Exam</button>
     </div>
 
     <script>
         let trackingData = [];
         let examActive = false, isAway = false, awayStartTime = null;
-        let timeLeft = 90 * 60; // 90 Minutes in seconds
+        let timeLeft = 90 * 60;
 
         function startExam() {
             document.documentElement.requestFullscreen();
             document.getElementById('start-screen').style.display = 'none';
             document.getElementById('exam-area').style.display = 'block';
             examActive = true;
-            startTimer();
+            runTimer();
         }
 
-        function startTimer() {
-            let timerDisplay = document.getElementById('timer');
-            let timerInterval = setInterval(() => {
-                if (!examActive) return clearInterval(timerInterval);
-                
-                timeLeft--;
-                let m = Math.floor(timeLeft / 60);
-                let s = timeLeft % 60;
-                timerDisplay.innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
-                
-                if (timeLeft <= 0) submitExam();
-            }, 1000);
-        }
-
-        // Monitoring Logic (Har 1 sec me check)
+        // Monitoring Logic (Har 200ms mein check)
         setInterval(() => {
             if (!examActive) return;
 
-            if (!document.hasFocus()) {
+            // Isme 'hidden' aur 'focus' dono cover hain
+            if (!document.hasFocus() || document.visibilityState === "hidden") {
+                document.getElementById('white-out-screen').style.display = 'block';
                 if (!isAway) {
                     isAway = true;
                     awayStartTime = new Date();
-                    logEvent("Focus Lost (Moved to another screen)");
+                    logEvent("Cheating Attempt: Window/Overlay Detected");
                 }
-            } else if (isAway) {
-                let duration = Math.round((new Date() - awayStartTime) / 1000);
-                logEvent(`Returned to exam. Away for: ${duration} seconds`);
-                isAway = false;
+            } else {
+                document.getElementById('white-out-screen').style.display = 'none';
+                if (isAway) {
+                    let duration = Math.round((new Date() - awayStartTime) / 1000);
+                    logEvent("Returned to exam. Away for: " + duration + "s");
+                    isAway = false;
+                }
             }
-        }, 1000);
+        }, 200);
 
         function logEvent(action) {
             trackingData.push({ action: action, time: new Date().toLocaleTimeString() });
-            console.log("Logged:", action);
+        }
+
+        function runTimer() {
+            let timerEl = document.getElementById('timer');
+            let timerInt = setInterval(() => {
+                if (!examActive) return clearInterval(timerInt);
+                timeLeft--;
+                let m = Math.floor(timeLeft / 60);
+                let s = timeLeft % 60;
+                timerEl.innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
+                if (timeLeft <= 0) submitExam();
+            }, 1000);
         }
 
         function submitExam() {
             if(!examActive) return;
             examActive = false;
-            let report = "Exam Tracking Data:\n" + JSON.stringify(trackingData, null, 2);
+            let report = "Exam Tracking Report:\n" + JSON.stringify(trackingData, null, 2);
             let blob = new Blob([report], { type: "text/plain" });
             let a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
-            a.download = "Exam_Report_" + new Date().getTime() + ".txt";
+            a.download = "Report_" + Date.now() + ".txt";
             a.click();
             alert("Exam Submitted!");
         }
     </script>
+</body>
+</html>
 </body>
 </html>
