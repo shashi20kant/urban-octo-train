@@ -3,17 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <title>Secure Exam System</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-        body { font-family: sans-serif; background: #f0f2f5; margin: 0; padding: 20px; text-align: center; }
-        #exam-area { display: none; width: 100%; max-width: 600px; margin: auto; }
+        body { font-family: sans-serif; background: #f0f2f5; margin: 0; padding: 0; text-align: center; overflow: hidden; }
+        #exam-area { display: none; width: 100vw; height: 100vh; padding: 20px; }
         
-        /* White-out Layer */
+        /* White-out Layer - Poori screen cover karega */
         #white-out-screen { 
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
             background: white; z-index: 999999; 
         }
         
-        #timer { font-size: 28px; color: #d32f2f; font-weight: bold; margin-bottom: 20px; }
+        #timer { font-size: 24px; color: #d32f2f; font-weight: bold; }
         button { background: #2563eb; color: white; border: none; padding: 15px 30px; border-radius: 8px; font-size: 16px; cursor: pointer; width: 100%; }
     </style>
 </head>
@@ -21,60 +22,59 @@
 
     <div id="white-out-screen"></div>
 
-    <div id="start-screen">
+    <div id="start-screen" style="margin-top: 50px;">
         <h1>Online Examination</h1>
         <button onclick="startExam()">Start Exam</button>
     </div>
 
     <div id="exam-area">
         <div id="timer">90:00</div>
-        <img src="YOUR_QUESTION_IMAGE_URL.jpg" style="width: 100%;">
+        <img src="YOUR_QUESTION_IMAGE_URL.jpg" style="width: 100%; max-height: 70vh;">
         <button onclick="submitExam()">Submit Exam</button>
     </div>
 
     <script>
         let trackingData = [];
-        let examActive = false, isAway = false, awayStartTime = null;
+        let examActive = false;
         let timeLeft = 90 * 60;
 
-        function startExam() {
+        async function startExam() {
             document.documentElement.requestFullscreen();
             document.getElementById('start-screen').style.display = 'none';
             document.getElementById('exam-area').style.display = 'block';
             examActive = true;
+            
+            // 1. Exam start hote hi pehla screenshot (Normal view)
+            captureProof("Exam Started");
             runTimer();
         }
 
-        // Monitoring Logic (Har 200ms mein check)
+        async function captureProof(action) {
+            // html2canvas sirf screen par dikhne wale hisse ka snapshot lega
+            const canvas = await html2canvas(document.body, {
+                width: window.innerWidth,
+                height: window.innerHeight,
+                scrollX: 0,
+                scrollY: 0
+            });
+            const imgData = canvas.toDataURL("image/png");
+            trackingData.push({ action: action, time: new Date().toLocaleTimeString(), snapshot: imgData });
+        }
+
         setInterval(() => {
             if (!examActive) return;
 
-            // Isme 'hidden' aur 'focus' dono cover hain
             if (!document.hasFocus() || document.visibilityState === "hidden") {
                 document.getElementById('white-out-screen').style.display = 'block';
-                if (!isAway) {
-                    isAway = true;
-                    awayStartTime = new Date();
-                    logEvent("Cheating Attempt: Window/Overlay Detected");
-                }
             } else {
                 document.getElementById('white-out-screen').style.display = 'none';
-                if (isAway) {
-                    let duration = Math.round((new Date() - awayStartTime) / 1000);
-                    logEvent("Returned to exam. Away for: " + duration + "s");
-                    isAway = false;
-                }
             }
         }, 200);
 
-        function logEvent(action) {
-            trackingData.push({ action: action, time: new Date().toLocaleTimeString() });
-        }
-
         function runTimer() {
             let timerEl = document.getElementById('timer');
-            let timerInt = setInterval(() => {
-                if (!examActive) return clearInterval(timerInt);
+            setInterval(() => {
+                if (!examActive) return;
                 timeLeft--;
                 let m = Math.floor(timeLeft / 60);
                 let s = timeLeft % 60;
@@ -86,16 +86,15 @@
         function submitExam() {
             if(!examActive) return;
             examActive = false;
-            let report = "Exam Tracking Report:\n" + JSON.stringify(trackingData, null, 2);
-            let blob = new Blob([report], { type: "text/plain" });
+            // JSON report download
+            let report = JSON.stringify(trackingData, null, 2);
+            let blob = new Blob([report], { type: "application/json" });
             let a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
-            a.download = "Report_" + Date.now() + ".txt";
+            a.download = "Exam_Evidence_Report_" + Date.now() + ".json";
             a.click();
-            alert("Exam Submitted!");
+            alert("Exam Submitted & Evidence Collected!");
         }
     </script>
-</body>
-</html>
 </body>
 </html>
