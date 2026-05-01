@@ -139,7 +139,7 @@
         question: "Web page me external JS file include karne ka sahi tag kaunsa hai?",
         options: {
           A: "<javascript src='app.js'>",
-          B: "<script src='app.js'></script>",
+          B: "&lt;script src='app.js'&gt;&lt;/script&gt;",
           C: "<js href='app.js'>",
           D: "<link rel='script' href='app.js'>"
         },
@@ -187,11 +187,18 @@
       saveHint.textContent = "Saved at " + new Date().toLocaleTimeString();
     }
 
+    function escapeHtml(text) {
+      return String(text)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;");
+    }
+
     function optionHtml(key, text, checked) {
       return `
         <label class="opt">
           <input type="radio" name="answer" value="${key}" ${checked ? "checked" : ""} />
-          <strong>${key}.</strong> <span>${text}</span>
+          <strong>${key}.</strong> <span>${escapeHtml(text)}</span>
         </label>
       `;
     }
@@ -252,4 +259,5 @@
     render();
   </script>
 </body>
+</html></body>
 </html>
