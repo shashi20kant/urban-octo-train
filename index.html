@@ -23,7 +23,7 @@
     #timer{font-size:23px;letter-spacing:1px}
     #status{min-height:18px;font-size:13px;color:#c8d7f8}
     #questionFrame{width:100%;height:74vh;min-height:520px;border:1px solid var(--line);border-radius:12px;display:none;background:#040914}
-    .report-box{background:#0a1221;border:1px solid #29426c;border-radius:10px;padding:12px;line-height:1.6}
+    .report-box{background:#0a1221;border:1px solid #29426c;border-radius:10px;padding:12px;line-height:1.7;font-family:Georgia,"Times New Roman",serif}
     .report-box b{color:#bfdbfe}
     .kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;margin:8px 0}
     .tile{background:#12203a;border:1px solid #2b4a79;border-radius:10px;padding:10px}
@@ -34,6 +34,14 @@
 <body>
   <div id="timerBox"><small>Time left</small> <b id="timer">90:00</b></div>
   <div class="wrap">
+    <section id="instructionCard" class="card">
+      <h2>Instructions</h2>
+      <p>
+        1) Start Exam ke baad exam mode active hoga. 2) Browser/tab chhodne par inactive record hoga.
+        3) Har 3 inactive incidents par -1 penalty lagti hai.
+      </p>
+    </section>
+
     <section id="introCard" class="card">
       <h1>Online Exam</h1>
       <p>Start click karte hi exam fullscreen mode me jayega. Browser/app chhodne ka inactive record report me add hoga.</p>
@@ -56,6 +64,11 @@
       </div>
       <div id="resultView" class="report-box hidden"></div>
     </section>
+
+    <section id="snapshotCard" class="card">
+      <h2>Live Snapshot</h2>
+      <pre id="snapshotView">Exam start hone ke baad live snapshot yahan dikhega.</pre>
+    </section>
   </div>
 
   <script>
@@ -71,15 +84,18 @@
     const statusEl = document.getElementById("status");
     const timerBox = document.getElementById("timerBox");
     const timerEl = document.getElementById("timer");
+    const instructionCard = document.getElementById("instructionCard");
     const introCard = document.getElementById("introCard");
     const questionCard = document.getElementById("questionCard");
     const resultCard = document.getElementById("resultCard");
+    const snapshotCard = document.getElementById("snapshotCard");
     const frame = document.getElementById("questionFrame");
     const openPdfBtn = document.getElementById("openPdfBtn");
     const shareBtn = document.getElementById("shareBtn");
     const viewResultBtn = document.getElementById("viewResultBtn");
     const downloadResultBtn = document.getElementById("downloadResultBtn");
     const resultView = document.getElementById("resultView");
+    const snapshotView = document.getElementById("snapshotView");
     const examHeading = document.getElementById("examHeading");
 
     let started = false;
@@ -118,11 +134,19 @@
     }
     function nowIso() { return new Date().toISOString(); }
     function mmss(sec) { const s = Math.max(0, sec); return `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`; }
-    function addEvent(type, details = {}) { report.events.push({ at: nowIso(), type, ...details }); saveDraft(); }
+    function renderSnapshot() {
+      snapshotView.textContent = JSON.stringify({
+        exam: report.exam,
+        summary: report.summary,
+        result: report.result,
+        recentEvents: report.events.slice(-8)
+      }, null, 2);
+    }
+    function addEvent(type, details = {}) { report.events.push({ at: nowIso(), type, ...details }); saveDraft(); renderSnapshot(); }
     function fmtDate(ts) {
       return new Date(ts).toLocaleString(undefined, {
-        weekday: "long", year: "numeric", month: "long", day: "numeric",
-        hour: "2-digit", minute: "2-digit", second: "2-digit"
+        weekday: "short", year: "numeric", month: "short", day: "2-digit",
+        hour: "2-digit", minute: "2-digit"
       });
     }
     function durationText(ms) {
@@ -273,16 +297,23 @@
           totalExamTime: durationText(examDurationMs),
           totalInactiveTime: inactiveText
         },
-        summaryInWords: `Student attempted ${report.result.attempted} out of ${report.result.totalQuestions}. Correct answers: ${report.result.correct}, wrong answers: ${report.result.wrong}, unattempted: ${report.result.unattempted}. Base score is ${report.result.baseScore}. Inactive incidents were ${report.result.leaveIncidentCount}, so penalty is ${report.result.penaltyMarks}. Final score is ${report.result.finalScore}.`,
+        summaryInWords: `Attempted ${report.result.attempted}/${report.result.totalQuestions}. Correct ${report.result.correct}, wrong ${report.result.wrong}, unattempted ${report.result.unattempted}. Score ${report.result.baseScore}, penalty ${report.result.penaltyMarks}, final ${report.result.finalScore}.`,
         inactiveTimeline: inactiveNatural,
         machineReport: report
       };
     }
 
+    function resultOnlyHtml(data) {
+      const r = data.machineReport.result;
+      const lines = r.selections.map((s, i) => `<li>Q${i + 1}: Selected ${s.selectedOption || "Not answered"}, Correct ${s.correctOption}.</li>`).join("");
+      return `<!doctype html><html><head><meta charset="UTF-8"><title>Result</title><style>body{font-family:Georgia,"Times New Roman",serif;margin:20px;color:#111}h1{margin-bottom:8px}p{margin:6px 0}ul{line-height:1.7}</style></head><body><h1>Exam Result</h1><p>${data.summaryInWords}</p><p>Started: ${data.examWindow.startedOn}</p><p>Submitted: ${data.examWindow.submittedOn}</p><ul>${lines}</ul></body></html>`;
+    }
+
     function reportHtml(data) {
-      const esc = (v) => String(v).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
-      const json = esc(JSON.stringify(data, null, 2));
-      return `<!doctype html><html><head><meta charset="UTF-8"><title>Exam Report</title><style>body{font-family:Arial;margin:20px;background:#f8fbff;color:#0f172a}h1{color:#1d4ed8}pre{background:#eef6ff;border:1px solid #bfdbfe;padding:12px;border-radius:10px;white-space:pre-wrap;word-break:break-word}</style></head><body><h1>Exam Report</h1><p>This report is generated in natural language with full machine details.</p><pre>${json}</pre></body></html>`;
+      const r = data.machineReport.result;
+      const activity = data.inactiveTimeline.length ? data.inactiveTimeline.map((x) => `<li>${x}</li>`).join("") : "<li>No inactive period recorded.</li>";
+      const qlines = r.selections.map((s, i) => `<li>Q${i + 1}: Selected ${s.selectedOption || "Not answered"}, Correct ${s.correctOption}.</li>`).join("");
+      return `<!doctype html><html><head><meta charset="UTF-8"><title>Exam Report</title><style>body{font-family:Georgia,"Times New Roman",serif;margin:20px;color:#111;line-height:1.7}h1{margin-bottom:8px;color:#1e3a8a}h2{margin-top:20px}ul{margin-top:8px}</style></head><body><h1>Exam Report</h1><p>Generated: ${data.generatedOn}</p><p>Started: ${data.examWindow.startedOn}</p><p>Submitted: ${data.examWindow.submittedOn}</p><p>Total exam time: ${data.examWindow.totalExamTime}</p><p>Total inactive time: ${data.examWindow.totalInactiveTime}</p><p>${data.summaryInWords}</p><h2>Question Summary</h2><ul>${qlines}</ul><h2>Inactive Timeline</h2><ul>${activity}</ul></body></html>`;
     }
 
     function download(name, content, type) {
@@ -293,31 +324,13 @@
       URL.revokeObjectURL(url);
     }
 
-    function renderResultPanel(data) {
-      const r = data.machineReport.result;
-      resultView.innerHTML = `
-        <div class="kpi">
-          <div class="tile"><div class="t">Attempted</div><div class="v">${r.attempted}/${r.totalQuestions}</div></div>
-          <div class="tile"><div class="t">Correct</div><div class="v ok">${r.correct}</div></div>
-          <div class="tile"><div class="t">Wrong</div><div class="v bad">${r.wrong}</div></div>
-          <div class="tile"><div class="t">Unattempted</div><div class="v warn">${r.unattempted}</div></div>
-          <div class="tile"><div class="t">Penalty</div><div class="v bad">-${r.penaltyMarks}</div></div>
-          <div class="tile"><div class="t">Final Score</div><div class="v">${r.finalScore}</div></div>
-        </div>
-        <div class="report-box">
-          <p><b>Started:</b> ${data.examWindow.startedOn}</p>
-          <p><b>Submitted:</b> ${data.examWindow.submittedOn}</p>
-          <p><b>Total exam time:</b> ${data.examWindow.totalExamTime}</p>
-          <p><b>Total inactive time:</b> ${data.examWindow.totalInactiveTime}</p>
-          <p>${data.summaryInWords}</p>
-        </div>
-      `;
-      resultView.classList.remove("hidden");
-    }
+    function renderResultPanel() { resultView.classList.add("hidden"); }
 
     function enterExamOnlyView() {
+      instructionCard.classList.add("hidden");
       introCard.classList.add("hidden");
       resultCard.classList.add("hidden");
+      snapshotCard.classList.add("hidden");
       questionCard.classList.remove("hidden");
       frame.style.display = "block";
       timerBox.style.display = "block";
@@ -329,10 +342,12 @@
       document.body.appendChild(examBtn);
     }
     function exitExamOnlyView() {
-      questionCard.classList.remove("hidden");
+      questionCard.classList.add("hidden");
       timerBox.style.display = "none";
+      instructionCard.classList.remove("hidden");
       introCard.classList.remove("hidden");
       resultCard.classList.remove("hidden");
+      snapshotCard.classList.remove("hidden");
       examHeading.textContent = "Exam completed";
       document.getElementById("introCard").appendChild(examBtn);
     }
@@ -366,9 +381,13 @@
       timerInt = setInterval(() => {
         const rem = Math.ceil((endTs - Date.now()) / 1000);
         timerEl.textContent = mmss(rem);
-        if (rem <= 0) clearInterval(timerInt);
+        if (rem <= 0) {
+          clearInterval(timerInt);
+          timerEl.textContent = "00:00";
+          setStatus("Time over. Submit button daba kar exam submit karein.", "warn");
+        }
       }, 300);
-      autoSubmitTimeout = setTimeout(() => submitExam("auto_timeout_90_minutes"), EXAM_SECONDS * 1000);
+      autoSubmitTimeout = null;
     }
 
     function submitExam(reason = "manual_submit_click") {
@@ -430,13 +449,14 @@
 
     viewResultBtn.addEventListener("click", () => {
       if (!submitted) return;
-      renderResultPanel(buildFinalReportObj());
+      const data = buildFinalReportObj();
+      download(`view-result-${Date.now()}.html`, resultOnlyHtml(data), "text/html");
     });
 
     downloadResultBtn.addEventListener("click", () => {
       if (!submitted) return;
       const data = buildFinalReportObj();
-      download(`exam-result-${Date.now()}.json`, JSON.stringify(data, null, 2), "application/json");
+      download(`download-result-${Date.now()}.html`, resultOnlyHtml(data), "text/html");
     });
 
     // Inactive tracking: browser/tab focus and visibility only.
@@ -460,6 +480,7 @@
     window.addEventListener("orientationchange", () => { if (started && !submitted) { addEvent("orientation_changed"); monitorSplitOverlay(); } });
 
     addEvent("page_loaded");
+    renderSnapshot();
     if (window.location.hostname === "github.com") setStatus("This is GitHub preview. Please use github.io deployed link.", "warn");
   </script>
 </body>
