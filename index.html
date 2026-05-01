@@ -1,100 +1,178 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Secure Exam System</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <style>
-        body { font-family: sans-serif; background: #f0f2f5; margin: 0; padding: 0; text-align: center; overflow: hidden; }
-        #exam-area { display: none; width: 100vw; height: 100vh; padding: 20px; }
-        
-        /* White-out Layer - Poori screen cover karega */
-        #white-out-screen { 
-            display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
-            background: white; z-index: 999999; 
-        }
-        
-        #timer { font-size: 24px; color: #d32f2f; font-weight: bold; }
-        button { background: #2563eb; color: white; border: none; padding: 15px 30px; border-radius: 8px; font-size: 16px; cursor: pointer; width: 100%; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Exam Controller</title>
+  <style>
+    body{margin:0;font-family:Arial,sans-serif;background:#0f172a;color:#e2e8f0}
+    .wrap{max-width:980px;margin:16px auto;padding:0 12px 24px}
+    .card{background:#111827;border:1px solid #334155;border-radius:12px;padding:14px;margin-bottom:12px}
+    .row{display:flex;gap:8px;flex-wrap:wrap}
+    button{border:0;border-radius:8px;padding:10px 14px;font-weight:700;cursor:pointer}
+    #examBtn{background:#22d3ee;color:#04252f}
+    .secondary{background:#334155;color:#f1f5f9}
+    #questionFrame{width:100%;height:480px;border:1px solid #334155;border-radius:10px;display:none;background:#020617}
+    #timerBox{position:fixed;top:10px;right:10px;background:#020617;border:1px solid #334155;border-radius:8px;padding:8px 10px;display:none}
+    pre{background:#020617;max-height:300px;overflow:auto;border-radius:8px;padding:10px}
+    #afterSubmit{display:none}
+    #status{min-height:18px;color:#93c5fd;font-size:13px}
+  </style>
 </head>
 <body>
+  <div id="timerBox"><small>Time Left</small> <b id="timer">90:00</b></div>
+  <div class="wrap">
+    <section class="card">
+      <h1>Exam Controller</h1>
+      <p>Start par fullscreen + monitoring start hoga. Har 3 leave incidents par -1 mark penalty.</p>
+      <button id="examBtn">Start Exam</button>
+      <p id="status"></p>
+    </section>
+    <section class="card">
+      <h2>Questions</h2>
+      <iframe id="questionFrame" title="Questions"></iframe>
+    </section>
+    <section class="card">
+      <h2>Report Snapshot</h2>
+      <pre id="reportView">{}</pre>
+      <div class="row" id="afterSubmit">
+        <button class="secondary" id="jsonBtn">Download JSON</button>
+        <button class="secondary" id="htmlBtn">Download HTML</button>
+        <button class="secondary" id="pdfBtn">Open PDF Link</button>
+        <button class="secondary" id="shareBtn">Share</button>
+      </div>
+    </section>
+  </div>
+  <script>
+    const DURATION = 90 * 60;
+    const SESSION_KEY = "exam_active_session";
+    const ANSWER_KEY_PREFIX = "exam_answers_";
+    const REPORT_KEY_PREFIX = "exam_report_";
+    const examBtn = document.getElementById("examBtn");
+    const statusEl = document.getElementById("status");
+    const frame = document.getElementById("questionFrame");
+    const timerBox = document.getElementById("timerBox");
+    const timerEl = document.getElementById("timer");
+    const reportView = document.getElementById("reportView");
+    const afterSubmit = document.getElementById("afterSubmit");
+    const jsonBtn = document.getElementById("jsonBtn");
+    const htmlBtn = document.getElementById("htmlBtn");
+    const pdfBtn = document.getElementById("pdfBtn");
+    const shareBtn = document.getElementById("shareBtn");
 
-    <div id="white-out-screen"></div>
+    let started = false, submitted = false, startAt = 0, submitAt = 0, inactiveAt = 0, sessionId = "";
+    let timerInt = null, autoTimeout = null, pdfUrl = "";
 
-    <div id="start-screen" style="margin-top: 50px;">
-        <h1>Online Examination</h1>
-        <button onclick="startExam()">Start Exam</button>
-    </div>
+    const report = {
+      exam: { durationSeconds: DURATION, startAt: null, submitAt: null, submitReason: null, sessionId: null },
+      events: [],
+      inactiveSessions: [],
+      result: { totalQuestions: 0, correct: 0, wrong: 0, unattempted: 0, baseScore: 0, leaveIncidentCount: 0, penaltyMarks: 0, finalScore: 0, selections: [] },
+      summary: { totalInactiveMs: 0 }
+    };
 
-    <div id="exam-area">
-        <div id="timer">90:00</div>
-        <img src="YOUR_QUESTION_IMAGE_URL.jpg" style="width: 100%; max-height: 70vh;">
-        <button onclick="submitExam()">Submit Exam</button>
-    </div>
+    const nowIso = () => new Date().toISOString();
+    const mmss = (sec) => `${String(Math.floor(Math.max(0, sec) / 60)).padStart(2, "0")}:${String(Math.max(0, sec) % 60).padStart(2, "0")}`;
+    function hms(ms){const s=Math.max(0,Math.floor(ms/1000));const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),r=s%60;return `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:${String(r).padStart(2,"0")}`;}
+    function setStatus(t){statusEl.textContent=t;}
+    function addEvent(type,details={}){report.events.push({time:nowIso(),type,...details});draw();}
+    function draw(){reportView.textContent=JSON.stringify({...report,summary:{...report.summary,totalInactive:hms(report.summary.totalInactiveMs)},recent:report.events.slice(-8)},null,2);}
+    function saveDraft(){if(sessionId)localStorage.setItem(REPORT_KEY_PREFIX+sessionId,JSON.stringify(report));}
+    function startInactive(reason){if(!started||submitted||inactiveAt)return;inactiveAt=Date.now();addEvent("inactive_start",{reason});saveDraft();}
+    function endInactive(reason){if(!started||submitted||!inactiveAt)return;const end=Date.now(),dur=end-inactiveAt;report.inactiveSessions.push({leftAt:new Date(inactiveAt).toISOString(),returnedAt:new Date(end).toISOString(),durationMs:dur,duration:hms(dur),returnReason:reason});report.summary.totalInactiveMs+=dur;inactiveAt=0;addEvent("inactive_end",{reason,durationMs:dur,duration:hms(dur)});saveDraft();}
+    function reqFullscreen(){if(document.documentElement.requestFullscreen)return document.documentElement.requestFullscreen({navigationUI:"hide"});return Promise.resolve();}
+    function tryOrientationLock(){if(screen.orientation&&screen.orientation.lock){screen.orientation.lock("portrait").then(()=>addEvent("orientation_locked")).catch(()=>addEvent("orientation_lock_failed"));}else addEvent("orientation_lock_not_supported");}
 
-    <script>
-        let trackingData = [];
-        let examActive = false;
-        let timeLeft = 90 * 60;
+    function compute() {
+      const raw = localStorage.getItem(ANSWER_KEY_PREFIX + sessionId);
+      if (!raw) return;
+      let data = null; try { data = JSON.parse(raw); } catch {}
+      if (!data || !Array.isArray(data.questions)) return;
+      let c = 0, w = 0, u = 0; const sels = [];
+      const ans = data.answers || {};
+      data.questions.forEach((q) => {
+        const s = ans[q.id] || null;
+        if (!s) u += 1; else if (s === q.correctOption) c += 1; else w += 1;
+        sels.push({ questionId: q.id, question: q.question, selectedOption: s, correctOption: q.correctOption, isCorrect: s ? s === q.correctOption : false });
+      });
+      const leaves = report.inactiveSessions.length;
+      const penalty = Math.floor(leaves / 3);
+      report.result = { totalQuestions: data.questions.length, correct: c, wrong: w, unattempted: u, baseScore: c, leaveIncidentCount: leaves, penaltyMarks: penalty, finalScore: c - penalty, selections: sels };
+    }
 
-        async function startExam() {
-            document.documentElement.requestFullscreen();
-            document.getElementById('start-screen').style.display = 'none';
-            document.getElementById('exam-area').style.display = 'block';
-            examActive = true;
-            
-            // 1. Exam start hote hi pehla screenshot (Normal view)
-            captureProof("Exam Started");
-            runTimer();
-        }
+    function finalReport() {
+      const dur = submitAt && startAt ? submitAt - startAt : 0;
+      return { generatedAt: nowIso(), ...report, summary: { ...report.summary, totalInactive: hms(report.summary.totalInactiveMs), examDurationMs: dur, examDuration: hms(dur) } };
+    }
+    function dl(name,text,type){const u=URL.createObjectURL(new Blob([text],{type}));const a=document.createElement("a");a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(u);}
+    function esc(s){return s.replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");}
+    function htmlRep(d){return `<!doctype html><html><head><meta charset="UTF-8"><title>Exam Report</title></head><body><h1>Exam Report</h1><pre>${esc(JSON.stringify(d,null,2))}</pre></body></html>`;}
+    function clearSharedLocal(){localStorage.removeItem(ANSWER_KEY_PREFIX+sessionId);localStorage.removeItem(REPORT_KEY_PREFIX+sessionId);localStorage.removeItem(SESSION_KEY);addEvent("local_deleted_after_share");setStatus("Share ke baad local data delete ho gaya.");}
 
-        async function captureProof(action) {
-            // html2canvas sirf screen par dikhne wale hisse ka snapshot lega
-            const canvas = await html2canvas(document.body, {
-                width: window.innerWidth,
-                height: window.innerHeight,
-                scrollX: 0,
-                scrollY: 0
-            });
-            const imgData = canvas.toDataURL("image/png");
-            trackingData.push({ action: action, time: new Date().toLocaleTimeString(), snapshot: imgData });
-        }
+    function startExam() {
+      if (started) return;
+      started = true;
+      sessionId = "sess_" + Date.now();
+      localStorage.setItem(SESSION_KEY, sessionId);
+      startAt = Date.now();
+      report.exam.startAt = new Date(startAt).toISOString();
+      report.exam.sessionId = sessionId;
+      addEvent("exam_start_click");
+      frame.src = `questions.html?session=${encodeURIComponent(sessionId)}`;
+      frame.style.display = "block";
+      timerBox.style.display = "block";
+      examBtn.textContent = "Submit Exam";
+      setStatus("Exam started");
+      reqFullscreen().then(()=>addEvent("fullscreen_entered")).catch(()=>addEvent("fullscreen_failed"));
+      tryOrientationLock();
+      const endTs = startAt + DURATION * 1000;
+      timerInt = setInterval(() => { const rem = Math.ceil((endTs - Date.now()) / 1000); timerEl.textContent = mmss(rem); if (rem <= 0) clearInterval(timerInt); }, 300);
+      autoTimeout = setTimeout(() => submitExam("auto_timeout_90_minutes"), DURATION * 1000);
+      saveDraft();
+    }
 
-        setInterval(() => {
-            if (!examActive) return;
+    function submitExam(reason = "manual_submit_click") {
+      if (!started || submitted) return;
+      submitted = true; submitAt = Date.now();
+      if (inactiveAt) endInactive("submit_while_inactive");
+      if (timerInt) clearInterval(timerInt);
+      if (autoTimeout) clearTimeout(autoTimeout);
+      if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {});
+      report.exam.submitAt = new Date(submitAt).toISOString();
+      report.exam.submitReason = reason;
+      addEvent("exam_submitted", { reason });
+      compute();
+      saveDraft();
+      examBtn.disabled = true;
+      examBtn.textContent = "Submitted";
+      timerEl.textContent = "00:00";
+      afterSubmit.style.display = "flex";
+      setStatus("Exam submitted");
+      draw();
+    }
 
-            if (!document.hasFocus() || document.visibilityState === "hidden") {
-                document.getElementById('white-out-screen').style.display = 'block';
-            } else {
-                document.getElementById('white-out-screen').style.display = 'none';
-            }
-        }, 200);
+    examBtn.addEventListener("click", () => { if (!started) startExam(); else submitExam("manual_submit_click"); });
+    jsonBtn.addEventListener("click", () => { if (!submitted) return; const d = finalReport(); dl(`exam-report-${Date.now()}.json`, JSON.stringify(d, null, 2), "application/json"); });
+    htmlBtn.addEventListener("click", () => { if (!submitted) return; const d = finalReport(); dl(`exam-report-${Date.now()}.html`, htmlRep(d), "text/html"); });
+    pdfBtn.addEventListener("click", () => { if (!submitted) return; if (pdfUrl) URL.revokeObjectURL(pdfUrl); pdfUrl = URL.createObjectURL(new Blob([htmlRep(finalReport())], { type: "text/html" })); window.open(pdfUrl, "_blank"); setStatus("PDF link open ho gaya. Print -> Save as PDF karein."); });
+    shareBtn.addEventListener("click", async () => {
+      if (!submitted) return;
+      if (!navigator.share) { setStatus("Share API supported nahi."); return; }
+      const d = finalReport();
+      const file = new File([JSON.stringify(d, null, 2)], `exam-report-${Date.now()}.json`, { type: "application/json" });
+      try { await navigator.share({ title: "Exam Report", files: [file] }); clearSharedLocal(); } catch { setStatus("Share cancel/fail."); }
+    });
 
-        function runTimer() {
-            let timerEl = document.getElementById('timer');
-            setInterval(() => {
-                if (!examActive) return;
-                timeLeft--;
-                let m = Math.floor(timeLeft / 60);
-                let s = timeLeft % 60;
-                timerEl.innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
-                if (timeLeft <= 0) submitExam();
-            }, 1000);
-        }
+    document.addEventListener("visibilitychange", () => { if (!started || submitted) return; addEvent("visibility_change", { state: document.visibilityState }); if (document.visibilityState === "hidden") startInactive("visibility_hidden"); if (document.visibilityState === "visible") endInactive("visibility_visible"); });
+    window.addEventListener("blur", () => { if (!started || submitted) return; addEvent("window_blur"); startInactive("window_blur"); });
+    window.addEventListener("focus", () => { if (!started || submitted) return; addEvent("window_focus"); endInactive("window_focus"); });
+    window.addEventListener("pagehide", () => { if (!started || submitted) return; addEvent("page_hide"); startInactive("page_hide"); });
+    window.addEventListener("pageshow", () => { if (!started || submitted) return; addEvent("page_show"); endInactive("page_show"); });
+    document.addEventListener("fullscreenchange", () => { if (!started || submitted) return; const fs = !!document.fullscreenElement; addEvent("fullscreen_change", { inFullscreen: fs }); if (!fs) startInactive("fullscreen_exited"); else endInactive("fullscreen_restored"); });
+    window.addEventListener("orientationchange", () => { if (!started || submitted) return; addEvent("orientation_change", { angle: screen.orientation ? screen.orientation.angle : "na" }); });
 
-        function submitExam() {
-            if(!examActive) return;
-            examActive = false;
-            // JSON report download
-            let report = JSON.stringify(trackingData, null, 2);
-            let blob = new Blob([report], { type: "application/json" });
-            let a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = "Exam_Evidence_Report_" + Date.now() + ".json";
-            a.click();
-            alert("Exam Submitted & Evidence Collected!");
-        }
-    </script>
+    addEvent("page_loaded");
+    draw();
+  </script>
 </body>
 </html>
