@@ -1,1 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Exam Questions</title>
+  <style>
+    :root {
+      --bg: #020617;
+      --card: #0f172a;
+      --line: #334155;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --accent: #22d3ee;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 12px;
+    }
+    .card {
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      background: rgba(15, 23, 42, 0.95);
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+    .meta {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+    .question {
+      font-size: 19px;
+      margin: 0 0 12px;
+      line-height: 1.5;
+    }
+    .opt {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 8px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      cursor: pointer;
+    }
+    .opt:hover { border-color: var(--accent); }
+    .row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    button {
+      border: 0;
+      border-radius: 8px;
+      cursor: pointer;
+      padding: 10px 14px;
+      font-weight: 700;
+      background: #334155;
+      color: #f1f5f9;
+    }
+    .palette {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    .pill {
+      width: 34px;
+      height: 34px;
+      border-radius: 20px;
+      border: 1px solid var(--line);
+      background: #1e293b;
+      color: #cbd5e1;
+      cursor: pointer;
+      font-weight: 700;
+    }
+    .pill.answered { background: #0f5132; border-color: #22c55e; }
+    .pill.active { outline: 2px solid #22d3ee; }
+    .hint { color: #86efac; font-size: 12px; min-height: 16px; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <section class="card">
+    <div class="meta" id="metaText">Question 1 of 5</div>
+    <h2 class="question" id="questionText"></h2>
+    <div id="optionsBox"></div>
+    <div class="row">
+      <button id="prevBtn">Back</button>
+      <button id="nextBtn">Next</button>
+    </div>
+    <div class="hint" id="saveHint"></div>
+    <div class="palette" id="palette"></div>
+  </section>
 
+  <script>
+    const SESSION_KEY = "exam_active_session";
+    const ANSWER_KEY_PREFIX = "exam_answers_";
+
+    const metaText = document.getElementById("metaText");
+    const questionText = document.getElementById("questionText");
+    const optionsBox = document.getElementById("optionsBox");
+    const prevBtn = document.getElementById("prevBtn");
+    const nextBtn = document.getElementById("nextBtn");
+    const palette = document.getElementById("palette");
+    const saveHint = document.getElementById("saveHint");
+
+    const questions = [
+      {
+        id: "q1",
+        question: "HTML ka full form kya hai?",
+        options: {
+          A: "Hyper Text Markup Language",
+          B: "High Text Machine Language",
+          C: "Hyperlinks and Text Mark Language",
+          D: "Home Tool Markup Language"
+        },
+        correctOption: "A"
+      },
+      {
+        id: "q2",
+        question: "CSS me text color set karne ke liye kaunsa property use hota hai?",
+        options: { A: "font-style", B: "text-color", C: "color", D: "font-color" },
+        correctOption: "C"
+      },
+      {
+        id: "q3",
+        question: "JavaScript me strict equality operator kaunsa hai?",
+        options: { A: "=", B: "==", C: "===", D: "!=" },
+        correctOption: "C"
+      },
+      {
+        id: "q4",
+        question: "Web page me external JS file include karne ka sahi tag kaunsa hai?",
+        options: {
+          A: "<javascript src='app.js'>",
+          B: "<script src='app.js'></script>",
+          C: "<js href='app.js'>",
+          D: "<link rel='script' href='app.js'>"
+        },
+        correctOption: "B"
+      },
+      {
+        id: "q5",
+        question: "DOM ka full form kya hai?",
+        options: {
+          A: "Data Object Management",
+          B: "Document Object Model",
+          C: "Digital Ordinance Model",
+          D: "Desktop Oriented Mode"
+        },
+        correctOption: "B"
+      }
+    ];
+
+    const params = new URLSearchParams(window.location.search);
+    let sessionId = params.get("session") || localStorage.getItem(SESSION_KEY) || "";
+    if (!sessionId) sessionId = "fallback_" + Date.now();
+    localStorage.setItem(SESSION_KEY, sessionId);
+
+    const storageKey = ANSWER_KEY_PREFIX + sessionId;
+    let currentIndex = 0;
+    let state = {
+      sessionId,
+      questions,
+      answers: {},
+      updatedAt: new Date().toISOString()
+    };
+
+    function loadState() {
+      const raw = localStorage.getItem(storageKey);
+      if (!raw) return;
+      try {
+        const parsed = JSON.parse(raw);
+        if (parsed && parsed.questions && parsed.answers) state = parsed;
+      } catch {}
+    }
+
+    function saveState() {
+      state.updatedAt = new Date().toISOString();
+      localStorage.setItem(storageKey, JSON.stringify(state));
+      saveHint.textContent = "Saved at " + new Date().toLocaleTimeString();
+    }
+
+    function optionHtml(key, text, checked) {
+      return `
+        <label class="opt">
+          <input type="radio" name="answer" value="${key}" ${checked ? "checked" : ""} />
+          <strong>${key}.</strong> <span>${text}</span>
+        </label>
+      `;
+    }
+
+    function renderPalette() {
+      palette.innerHTML = "";
+      questions.forEach((q, i) => {
+        const btn = document.createElement("button");
+        btn.className = "pill";
+        if (state.answers[q.id]) btn.classList.add("answered");
+        if (i === currentIndex) btn.classList.add("active");
+        btn.textContent = String(i + 1);
+        btn.addEventListener("click", () => {
+          currentIndex = i;
+          render();
+        });
+        palette.appendChild(btn);
+      });
+    }
+
+    function render() {
+      const q = questions[currentIndex];
+      metaText.textContent = `Question ${currentIndex + 1} of ${questions.length}`;
+      questionText.textContent = q.question;
+      const selected = state.answers[q.id] || "";
+      optionsBox.innerHTML = Object.entries(q.options)
+        .map(([k, v]) => optionHtml(k, v, k === selected))
+        .join("");
+      prevBtn.disabled = currentIndex === 0;
+      nextBtn.disabled = currentIndex === questions.length - 1;
+      renderPalette();
+    }
+
+    optionsBox.addEventListener("change", (e) => {
+      const target = e.target;
+      if (!target || target.name !== "answer") return;
+      const q = questions[currentIndex];
+      state.answers[q.id] = target.value;
+      saveState();
+      renderPalette();
+    });
+
+    prevBtn.addEventListener("click", () => {
+      if (currentIndex > 0) {
+        currentIndex -= 1;
+        render();
+      }
+    });
+    nextBtn.addEventListener("click", () => {
+      if (currentIndex < questions.length - 1) {
+        currentIndex += 1;
+        render();
+      }
+    });
+
+    loadState();
+    saveState();
+    render();
+  </script>
+</body>
+</html>
