@@ -46,7 +46,7 @@
       <iframe id="questionFrame" title="Questions"></iframe>
     </section>
 
-    <section id="resultCard" class="card hidden">
+    <section id="resultCard" class="card">
       <h2>Result & Report</h2>
       <div class="row" id="afterSubmitActions">
         <button class="secondary" id="openPdfBtn">Open Report Link</button>
@@ -329,10 +329,11 @@
       document.body.appendChild(examBtn);
     }
     function exitExamOnlyView() {
-      questionCard.classList.add("hidden");
+      questionCard.classList.remove("hidden");
       timerBox.style.display = "none";
       introCard.classList.remove("hidden");
       resultCard.classList.remove("hidden");
+      examHeading.textContent = "Exam completed";
       document.getElementById("introCard").appendChild(examBtn);
     }
 
@@ -462,6 +463,4 @@
     if (window.location.hostname === "github.com") setStatus("This is GitHub preview. Please use github.io deployed link.", "warn");
   </script>
 </body>
-</html>
-
 </html>
