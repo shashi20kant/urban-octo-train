@@ -29,6 +29,20 @@
     .tile{background:#12203a;border:1px solid #2b4a79;border-radius:10px;padding:10px}
     .tile .t{font-size:12px;color:#a8c0ef}.tile .v{font-size:21px;font-weight:700}
     .ok{color:#86efac}.bad{color:#fda4af}.warn{color:#fcd34d}
+    #snapshotView{
+      margin:0;
+      background:#050b17;
+      border:1px solid #2b4a79;
+      border-radius:10px;
+      padding:10px;
+      max-height:260px;
+      overflow:auto;
+      line-height:1.5;
+      color:#dbeafe;
+      font-family:Consolas, "Courier New", monospace;
+      white-space:pre-wrap;
+      word-break:break-word;
+    }
   </style>
 </head>
 <body>
@@ -66,8 +80,10 @@
     </section>
 
     <section id="snapshotCard" class="card">
-      <h2>Live Snapshot</h2>
-      <pre id="snapshotView">Exam start hone ke baad live snapshot yahan dikhega.</pre>
+      <h2>Saved Report Preview</h2>
+      <pre id="snapshotView">{
+  "status": "Exam start hone ke baad report draft yahan dikhega."
+}</pre>
     </section>
   </div>
 
@@ -137,9 +153,10 @@
     function renderSnapshot() {
       snapshotView.textContent = JSON.stringify({
         exam: report.exam,
-        summary: report.summary,
         result: report.result,
-        recentEvents: report.events.slice(-8)
+        summary: report.summary,
+        inactiveSessions: report.inactiveSessions,
+        recentEvents: report.events.slice(-6)
       }, null, 2);
     }
     function addEvent(type, details = {}) { report.events.push({ at: nowIso(), type, ...details }); saveDraft(); renderSnapshot(); }
@@ -305,15 +322,21 @@
 
     function resultOnlyHtml(data) {
       const r = data.machineReport.result;
-      const lines = r.selections.map((s, i) => `<li>Q${i + 1}: Selected ${s.selectedOption || "Not answered"}, Correct ${s.correctOption}.</li>`).join("");
-      return `<!doctype html><html><head><meta charset="UTF-8"><title>Result</title><style>body{font-family:Georgia,"Times New Roman",serif;margin:20px;color:#111}h1{margin-bottom:8px}p{margin:6px 0}ul{line-height:1.7}</style></head><body><h1>Exam Result</h1><p>${data.summaryInWords}</p><p>Started: ${data.examWindow.startedOn}</p><p>Submitted: ${data.examWindow.submittedOn}</p><ul>${lines}</ul></body></html>`;
+      const lines = r.selections.map((s, i) => {
+        const status = s.selectedOption ? (s.isCorrect ? "Correct" : "Wrong") : "Skipped";
+        return `<li>Q${i + 1}: ${s.question}<br>Selected: ${s.selectedOption || "Not answered"} | Correct: ${s.correctOption} | Status: ${status}</li>`;
+      }).join("");
+      return `<!doctype html><html><head><meta charset="UTF-8"><title>Result</title><style>body{font-family:Georgia,"Times New Roman",serif;margin:20px;color:#111}h1{margin-bottom:8px}p{margin:6px 0}ul{line-height:1.8}li{margin-bottom:10px}</style></head><body><h1>Exam Result</h1><p>${data.summaryInWords}</p><p>Started: ${data.examWindow.startedOn}</p><p>Submitted: ${data.examWindow.submittedOn}</p><ul>${lines}</ul></body></html>`;
     }
 
     function reportHtml(data) {
       const r = data.machineReport.result;
       const activity = data.inactiveTimeline.length ? data.inactiveTimeline.map((x) => `<li>${x}</li>`).join("") : "<li>No inactive period recorded.</li>";
-      const qlines = r.selections.map((s, i) => `<li>Q${i + 1}: Selected ${s.selectedOption || "Not answered"}, Correct ${s.correctOption}.</li>`).join("");
-      return `<!doctype html><html><head><meta charset="UTF-8"><title>Exam Report</title><style>body{font-family:Georgia,"Times New Roman",serif;margin:20px;color:#111;line-height:1.7}h1{margin-bottom:8px;color:#1e3a8a}h2{margin-top:20px}ul{margin-top:8px}</style></head><body><h1>Exam Report</h1><p>Generated: ${data.generatedOn}</p><p>Started: ${data.examWindow.startedOn}</p><p>Submitted: ${data.examWindow.submittedOn}</p><p>Total exam time: ${data.examWindow.totalExamTime}</p><p>Total inactive time: ${data.examWindow.totalInactiveTime}</p><p>${data.summaryInWords}</p><h2>Question Summary</h2><ul>${qlines}</ul><h2>Inactive Timeline</h2><ul>${activity}</ul></body></html>`;
+      const qlines = r.selections.map((s, i) => {
+        const status = s.selectedOption ? (s.isCorrect ? "Correct" : "Wrong") : "Skipped";
+        return `<li>Q${i + 1}: ${s.question}<br>Selected: ${s.selectedOption || "Not answered"} | Correct: ${s.correctOption} | Status: ${status}</li>`;
+      }).join("");
+      return `<!doctype html><html><head><meta charset="UTF-8"><title>Exam Report</title><style>body{font-family:Georgia,"Times New Roman",serif;margin:20px;color:#111;line-height:1.8}h1{margin-bottom:8px;color:#1e3a8a}h2{margin-top:20px}ul{margin-top:8px}li{margin-bottom:10px}</style></head><body><h1>Exam Report</h1><p>Generated: ${data.generatedOn}</p><p>Started: ${data.examWindow.startedOn}</p><p>Submitted: ${data.examWindow.submittedOn}</p><p>Total exam time: ${data.examWindow.totalExamTime}</p><p>Total inactive time: ${data.examWindow.totalInactiveTime}</p><p>${data.summaryInWords}</p><h2>Question List</h2><ul>${qlines}</ul><h2>Inactive List</h2><ul>${activity}</ul></body></html>`;
     }
 
     function download(name, content, type) {
