@@ -83,6 +83,16 @@
     .pill.answered { background: #0f5132; border-color: #22c55e; }
     .pill.active { outline: 2px solid #22d3ee; }
     .hint { color: #86efac; font-size: 12px; min-height: 16px; margin-top: 8px; }
+    .end-note {
+      border: 1px solid #33507e;
+      border-radius: 10px;
+      padding: 12px;
+      background: #0b162b;
+      color: #dbeafe;
+      line-height: 1.65;
+      max-height: 220px;
+      overflow: auto;
+    }
   </style>
 </head>
 <body>
@@ -220,6 +230,24 @@
     }
 
     function render() {
+      const onSummaryPage = currentIndex === questions.length;
+      if (onSummaryPage) {
+        metaText.textContent = "Instruction Page (Not counted in MCQ)";
+        questionText.textContent = "Aap MCQ complete kar chuke hain.";
+        optionsBox.innerHTML = `
+          <div class="end-note">
+            <p>Ye section MCQ ka part nahi hai.</p>
+            <p>Submit karne se pehle aap Back se questions check kar sakte hain.</p>
+            <p>Result me sirf 5 MCQ hi count honge.</p>
+            <p>In case needed, you can scroll this area to read all instructions.</p>
+          </div>
+        `;
+        prevBtn.disabled = false;
+        nextBtn.disabled = true;
+        renderPalette();
+        return;
+      }
+
       const q = questions[currentIndex];
       metaText.textContent = `Question ${currentIndex + 1} of ${questions.length}`;
       questionText.textContent = q.question;
@@ -228,7 +256,7 @@
         .map(([k, v]) => optionHtml(k, v, k === selected))
         .join("");
       prevBtn.disabled = currentIndex === 0;
-      nextBtn.disabled = currentIndex === questions.length - 1;
+      nextBtn.disabled = false;
       renderPalette();
     }
 
@@ -248,7 +276,7 @@
       }
     });
     nextBtn.addEventListener("click", () => {
-      if (currentIndex < questions.length - 1) {
+      if (currentIndex < questions.length) {
         currentIndex += 1;
         render();
       }
@@ -259,5 +287,4 @@
     render();
   </script>
 </body>
-</html></body>
 </html>
