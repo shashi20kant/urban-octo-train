@@ -7,36 +7,52 @@
   <style>
     :root {
       --bg: #020617;
-      --card: #0f172a;
       --line: #334155;
       --text: #e2e8f0;
       --muted: #94a3b8;
       --accent: #22d3ee;
     }
     * { box-sizing: border-box; }
-    body {
+    html, body {
       margin: 0;
+      height: 100%;
+      overflow: hidden;
       font-family: Arial, sans-serif;
       background: var(--bg);
       color: var(--text);
-      padding: 12px;
     }
-    .card {
-      border: 1px solid rgba(148, 163, 184, 0.22);
-      background: rgba(15, 23, 42, 0.95);
-      border-radius: 10px;
-      padding: 14px;
-      margin-bottom: 12px;
+    /* No page scroll inside exam iframe */
+    .shell {
+      min-height: 100%;
+      padding: env(safe-area-inset-top, 12px) 12px max(72px, env(safe-area-inset-bottom));
+      padding-bottom: 12px;
+      display: flex;
+      flex-direction: column;
+      max-height: 100vh;
+    }
+    .top {
+      flex: 1 1 auto;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
     }
     .meta {
       color: var(--muted);
       font-size: 13px;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
+      flex-shrink: 0;
     }
     .question {
-      font-size: 19px;
-      margin: 0 0 12px;
-      line-height: 1.5;
+      font-size: clamp(18px, 4.2vw, 22px);
+      margin: 0 0 10px;
+      line-height: 1.45;
+      flex-shrink: 0;
+    }
+    #optionsBox {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow: hidden;
     }
     .opt {
       border: 1px solid var(--line);
@@ -49,26 +65,31 @@
       cursor: pointer;
     }
     .opt:hover { border-color: var(--accent); }
-    .row {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      align-items: center;
+    .logic-block {
+      border: 1px solid #33507e;
+      border-radius: 10px;
+      padding: 12px;
+      background: #0b162b;
+      color: #dbeafe;
+      line-height: 1.6;
+      font-size: clamp(15px, 3.6vw, 17px);
     }
-    button {
-      border: 0;
-      border-radius: 8px;
-      cursor: pointer;
-      padding: 10px 14px;
-      font-weight: 700;
-      background: #334155;
-      color: #f1f5f9;
+    .bottom {
+      flex-shrink: 0;
+      margin-top: 12px;
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+      max-width: 100%;
+    }
+    .bottom-spacer {
+      min-height: 8vh;
+      max-height: max(72px, 12vh);
     }
     .palette {
       display: flex;
       gap: 6px;
       flex-wrap: wrap;
-      margin-top: 10px;
+      justify-content: center;
+      margin-bottom: 8px;
     }
     .pill {
       width: 34px;
@@ -80,33 +101,51 @@
       cursor: pointer;
       font-weight: 700;
     }
-    .pill.answered { background: #0f5132; border-color: #22c55e; }
     .pill.active { outline: 2px solid #22d3ee; }
-    .hint { color: #86efac; font-size: 12px; min-height: 16px; margin-top: 8px; }
-    .end-note {
-      border: 1px solid #33507e;
-      border-radius: 10px;
-      padding: 12px;
-      background: #0b162b;
-      color: #dbeafe;
-      line-height: 1.65;
-      max-height: 220px;
-      overflow: auto;
+    .pill.logic { opacity: 0.85; }
+    .pill.answered { background: #14532d; border-color: #22c55e; }
+    .row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 6px;
     }
+    button {
+      border: 0;
+      border-radius: 8px;
+      cursor: pointer;
+      padding: 10px 14px;
+      font-weight: 700;
+      background: #334155;
+      color: #f1f5f9;
+    }
+    #mcqModeBtn {
+      background: #0e7490;
+      color: #ecfeff;
+    }
+    .hint { color: #86efac; font-size: 12px; min-height: 16px; text-align: center; }
   </style>
 </head>
 <body>
-  <section class="card">
-    <div class="meta" id="metaText">Question 1 of 5</div>
-    <h2 class="question" id="questionText"></h2>
-    <div id="optionsBox"></div>
-    <div class="row">
-      <button id="prevBtn">Back</button>
-      <button id="nextBtn">Next</button>
+  <div class="shell">
+    <div class="top">
+      <div class="meta" id="metaText">Objective 1 of 4</div>
+      <h2 class="question" id="questionText"></h2>
+      <div id="optionsBox"></div>
     </div>
-    <div class="hint" id="saveHint"></div>
-    <div class="palette" id="palette"></div>
-  </section>
+    <div class="bottom-spacer"></div>
+    <div class="bottom">
+      <div class="palette" id="palette"></div>
+      <div class="row">
+        <button type="button" id="prevBtn">Back</button>
+        <button type="button" id="mcqModeBtn">MCQ (options)</button>
+        <button type="button" id="nextBtn">Next</button>
+      </div>
+      <div class="hint" id="saveHint"></div>
+    </div>
+  </div>
 
   <script>
     const SESSION_KEY = "exam_active_session";
@@ -117,67 +156,80 @@
     const optionsBox = document.getElementById("optionsBox");
     const prevBtn = document.getElementById("prevBtn");
     const nextBtn = document.getElementById("nextBtn");
+    const mcqModeBtn = document.getElementById("mcqModeBtn");
     const palette = document.getElementById("palette");
     const saveHint = document.getElementById("saveHint");
 
-    const questions = [
+    /*
+      kind: logic = objective text only, no mcq scoring
+           hybrid = objective + MCQ (options show after MCQ button)
+           mcq = always show options
+    */
+    const items = [
       {
-        id: "q1",
-        question: "HTML ka full form kya hai?",
+        id: "s1",
+        kind: "logic",
+        headline: "Objective 1 — Reading",
+        body: "Yeh sirf padaav hai. Ye objective MCQ me count nahi hoga."
+      },
+      {
+        id: "h2",
+        kind: "hybrid",
+        headline: "Objective 2 — Coding basics",
+        body: "Pehle yeh padaav padhiye.",
+        mcqTitle: "Web page par external JS ka sahi tarika?",
         options: {
-          A: "Hyper Text Markup Language",
-          B: "High Text Machine Language",
-          C: "Hyperlinks and Text Mark Language",
-          D: "Home Tool Markup Language"
+          A: "\u003cscript src='app.js'\u003e\u003c/script\u003e",
+          B: "\u003cjavascript src='app.js'\u003e",
+          C: "\u003cjs href='app.js'\u003e",
+          D: "\u003clink rel='script' href='app.js'\u003e"
         },
         correctOption: "A"
       },
       {
-        id: "q2",
-        question: "CSS me text color set karne ke liye kaunsa property use hota hai?",
+        id: "m3",
+        kind: "mcq",
+        mcqTitle: "CSS me text rang set karne waala property?",
         options: { A: "font-style", B: "text-color", C: "color", D: "font-color" },
         correctOption: "C"
       },
       {
-        id: "q3",
-        question: "JavaScript me strict equality operator kaunsa hai?",
-        options: { A: "=", B: "==", C: "===", D: "!=" },
-        correctOption: "C"
-      },
-      {
-        id: "q4",
-        question: "Web page me external JS file include karne ka sahi tag kaunsa hai?",
+        id: "h4",
+        kind: "hybrid",
+        headline: "Objective 4 — Last step",
+        body: "Chota padaav.",
+        mcqTitle: "HTML ka poora naam?",
         options: {
-          A: "<javascript src='app.js'>",
-          B: "&lt;script src='app.js'&gt;&lt;/script&gt;",
-          C: "<js href='app.js'>",
-          D: "<link rel='script' href='app.js'>"
+          A: "Hyper Text Markup Language",
+          B: "High Tool Markup Language",
+          C: "Hyper Tab Mark Language",
+          D: "Home Text Model Language"
         },
-        correctOption: "B"
-      },
-      {
-        id: "q5",
-        question: "DOM ka full form kya hai?",
-        options: {
-          A: "Data Object Management",
-          B: "Document Object Model",
-          C: "Digital Ordinance Model",
-          D: "Desktop Oriented Mode"
-        },
-        correctOption: "B"
+        correctOption: "A"
       }
     ];
 
+    const mcqQuestions = items
+      .filter((it) => it.kind === "hybrid" || it.kind === "mcq")
+      .map((it) => ({
+        id: it.id,
+        question: it.mcqTitle,
+        options: it.options,
+        correctOption: it.correctOption
+      }));
+
     const params = new URLSearchParams(window.location.search);
     let sessionId = params.get("session") || localStorage.getItem(SESSION_KEY) || "";
-    if (!sessionId) sessionId = "fallback_" + Date.now();
+    if (!sessionId) sessionId = `fallback_${Date.now()}`;
     localStorage.setItem(SESSION_KEY, sessionId);
 
     const storageKey = ANSWER_KEY_PREFIX + sessionId;
     let currentIndex = 0;
     let state = {
       sessionId,
-      questions,
+      items,
+      mcqQuestions,
+      revealed: {},
       answers: {},
       updatedAt: new Date().toISOString()
     };
@@ -186,15 +238,24 @@
       const raw = localStorage.getItem(storageKey);
       if (!raw) return;
       try {
-        const parsed = JSON.parse(raw);
-        if (parsed && parsed.questions && parsed.answers) state = parsed;
-      } catch {}
+        const p = JSON.parse(raw);
+        if (p && p.mcqQuestions && p.answers) {
+          state.answers = p.answers || {};
+          state.revealed = p.revealed || {};
+        }
+      } catch (_) {}
     }
 
-    function saveState() {
-      state.updatedAt = new Date().toISOString();
-      localStorage.setItem(storageKey, JSON.stringify(state));
-      saveHint.textContent = "Saved at " + new Date().toLocaleTimeString();
+    function persist() {
+      const payload = {
+        sessionId: state.sessionId,
+        questions: state.mcqQuestions,
+        answers: state.answers,
+        revealed: state.revealed,
+        updatedAt: new Date().toISOString()
+      };
+      localStorage.setItem(storageKey, JSON.stringify(payload));
+      saveHint.textContent = `Saved ${new Date().toLocaleTimeString()}`;
     }
 
     function escapeHtml(text) {
@@ -215,10 +276,13 @@
 
     function renderPalette() {
       palette.innerHTML = "";
-      questions.forEach((q, i) => {
+      items.forEach((q, i) => {
         const btn = document.createElement("button");
+        btn.type = "button";
         btn.className = "pill";
-        if (state.answers[q.id]) btn.classList.add("answered");
+        if (q.kind === "logic") btn.classList.add("logic");
+        const mcqId = q.kind === "hybrid" || q.kind === "mcq" ? q.id : null;
+        if (mcqId && state.answers[mcqId]) btn.classList.add("answered");
         if (i === currentIndex) btn.classList.add("active");
         btn.textContent = String(i + 1);
         btn.addEventListener("click", () => {
@@ -229,44 +293,69 @@
       });
     }
 
+    function currentItemShowsMcq(it) {
+      if (it.kind === "logic") return false;
+      if (it.kind === "mcq") return true;
+      return !!state.revealed[it.id];
+    }
+
     function render() {
-      const onSummaryPage = currentIndex === questions.length;
-      if (onSummaryPage) {
-        metaText.textContent = "Instruction Page (Not counted in MCQ)";
-        questionText.textContent = "Aap MCQ complete kar chuke hain.";
-        optionsBox.innerHTML = `
-          <div class="end-note">
-            <p>Ye section MCQ ka part nahi hai.</p>
-            <p>Submit karne se pehle aap Back se questions check kar sakte hain.</p>
-            <p>Result me sirf 5 MCQ hi count honge.</p>
-            <p>In case needed, you can scroll this area to read all instructions.</p>
-          </div>
-        `;
-        prevBtn.disabled = false;
-        nextBtn.disabled = true;
-        renderPalette();
-        return;
+      const it = items[currentIndex];
+      metaText.textContent = `${it.kind === "logic" ? "Objective" : "Step"} ${currentIndex + 1} of ${items.length}`;
+
+      mcqModeBtn.style.display =
+        it.kind === "hybrid" && !state.revealed[it.id]
+          ? "inline-block"
+          : it.kind === "hybrid" && state.revealed[it.id]
+            ? "none"
+            : it.kind === "mcq"
+              ? "none"
+              : "none";
+
+      if (it.kind === "logic") {
+        questionText.textContent = it.headline;
+        optionsBox.innerHTML = `<div class="logic-block">${escapeHtml(it.body)}</div>`;
+      } else if (it.kind === "hybrid") {
+        const showMcq = currentItemShowsMcq(it);
+        questionText.textContent = showMcq ? it.mcqTitle : it.headline;
+        if (!showMcq) {
+          optionsBox.innerHTML = `<div class="logic-block">${escapeHtml(it.body)}</div>`;
+        } else {
+          const sel = state.answers[it.id] || "";
+          optionsBox.innerHTML = Object.entries(it.options)
+            .map(([k, v]) => optionHtml(k, v, k === sel))
+            .join("");
+        }
+      } else {
+        questionText.textContent = it.mcqTitle;
+        const sel = state.answers[it.id] || "";
+        optionsBox.innerHTML = Object.entries(it.options)
+          .map(([k, v]) => optionHtml(k, v, k === sel))
+          .join("");
       }
 
-      const q = questions[currentIndex];
-      metaText.textContent = `Question ${currentIndex + 1} of ${questions.length}`;
-      questionText.textContent = q.question;
-      const selected = state.answers[q.id] || "";
-      optionsBox.innerHTML = Object.entries(q.options)
-        .map(([k, v]) => optionHtml(k, v, k === selected))
-        .join("");
       prevBtn.disabled = currentIndex === 0;
-      nextBtn.disabled = false;
+      nextBtn.disabled = currentIndex === items.length - 1;
       renderPalette();
     }
 
     optionsBox.addEventListener("change", (e) => {
-      const target = e.target;
-      if (!target || target.name !== "answer") return;
-      const q = questions[currentIndex];
-      state.answers[q.id] = target.value;
-      saveState();
+      const t = e.target;
+      if (!t || t.name !== "answer") return;
+      const it = items[currentIndex];
+      if (it.kind !== "hybrid" && it.kind !== "mcq") return;
+      if (it.kind === "hybrid" && !state.revealed[it.id]) return;
+      state.answers[it.id] = t.value;
+      persist();
       renderPalette();
+    });
+
+    mcqModeBtn.addEventListener("click", () => {
+      const it = items[currentIndex];
+      if (it.kind !== "hybrid") return;
+      state.revealed[it.id] = true;
+      persist();
+      render();
     });
 
     prevBtn.addEventListener("click", () => {
@@ -276,14 +365,14 @@
       }
     });
     nextBtn.addEventListener("click", () => {
-      if (currentIndex < questions.length) {
+      if (currentIndex < items.length - 1) {
         currentIndex += 1;
         render();
       }
     });
 
     loadState();
-    saveState();
+    persist();
     render();
   </script>
 </body>
