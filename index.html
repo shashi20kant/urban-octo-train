@@ -11,11 +11,13 @@
     }
     *{box-sizing:border-box}
     body{margin:0;font-family:Arial,sans-serif;background:linear-gradient(120deg,#060b16,#0b1220,#111a2d);color:var(--text)}
-    body.post-submit-scroll{overflow-y:auto;-webkit-overflow-scrolling:touch}
+    body.pre-exam{overflow-y:auto;-webkit-overflow-scrolling:touch}
+    body.in-exam{overflow:hidden;position:fixed;width:100%;height:100%}
     .wrap{max-width:1100px;margin:16px auto;padding:0 12px 28px}
     .card{background:rgba(18,26,43,.95);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
     .hidden{display:none!important}
-    h1,h2{margin:0 0 8px} p{margin:0 0 10px;color:var(--muted);line-height:1.45}
+    h1,h2{margin:0 0 8px}
+    p{margin:0 0 10px;color:var(--muted);line-height:1.45}
     .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
     button{border:0;border-radius:8px;padding:10px 14px;font-weight:700;cursor:pointer}
     #examBtn{background:var(--accent);color:#072219}
@@ -24,14 +26,12 @@
     #timerBox{
       position:fixed;top:10px;right:10px;
       background:rgba(8,14,26,.95);border:1px solid #355081;border-radius:10px;
-      padding:8px 10px;display:none;z-index:9999;color:#dfe9ff;
-      width: fit-content;
+      padding:6px 10px;display:none;z-index:9999;color:#dfe9ff;
+      width:fit-content;white-space:nowrap;
     }
     #timerBox.timer-warn{border-color:#f87171;color:#fecaca;background:rgba(62,17,26,.92)}
-    #timer{font-size:23px;letter-spacing:1px}
+    #timer{font-size:20px;letter-spacing:1px}
     #status{min-height:18px;font-size:13px;color:#c8d7f8}
-    /* Bigger exam area — iframe itself does not scroll (inner page overflow hidden). */
-    #questionFrame{width:100%;height:calc(92vh - 80px);min-height:calc(620px);max-height:none;border:1px solid var(--line);border-radius:12px;display:none;background:#040914}
     #startGateLine{font-size:13px;color:#a8bdf0;margin-left:8px;display:inline-block;vertical-align:middle}
     .report-box{background:#0a1221;border:1px solid #29426c;border-radius:10px;padding:12px;line-height:1.7;font-family:Georgia,"Times New Roman",serif}
     .ok{color:#86efac}.bad{color:#fda4af}.warn{color:#fcd34d}
@@ -39,7 +39,12 @@
       margin:0;background:#050b17;border:1px solid #2b4a79;border-radius:10px;padding:10px;max-height:260px;
       overflow:auto;line-height:1.5;color:#dbeafe;font-family:Consolas,"Courier New",monospace;white-space:pre-wrap;word-break:break-word;
     }
-    /* Post-submit popup */
+    #examOverlay{
+      display:none;position:fixed;inset:0;z-index:5000;background:#040914;flex-direction:column;
+    }
+    #examOverlay.active{display:flex}
+    #examFrameWrap{flex:1 1 auto;min-height:0;overflow:hidden;}
+    #questionFrame{width:100%;height:100%;border:none;display:block;background:#040914;}
     #shareModalWrap{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.65);z-index:10005;padding:16px;}
     #shareModalWrap.show{display:flex}
     #shareModal{background:#151f33;border:1px solid #3d5c8c;border-radius:12px;max-width:420px;width:100%;padding:18px;line-height:1.5;color:#e2ecff;font-family:Georgia,serif}
@@ -47,7 +52,7 @@
     #shareModal button{margin-top:12px;background:#2563eb;color:#fff;width:100%;padding:12px;font-weight:700;border-radius:8px;border:none;cursor:pointer}
   </style>
 </head>
-<body>
+<body class="pre-exam">
   <div id="timerBox"><small>Time left</small> <b id="timer">90:00</b></div>
 
   <div id="shareModalWrap" role="dialog" aria-modal="true" aria-labelledby="shareModalTitle">
@@ -55,6 +60,12 @@
       <h3 id="shareModalTitle">Exam submit ho gayi</h3>
       <p>Share Report button dabakar result share kar dein taaki backup rahe.</p>
       <button type="button" id="shareModalOk">Theek hai</button>
+    </div>
+  </div>
+
+  <div id="examOverlay">
+    <div id="examFrameWrap">
+      <iframe id="questionFrame" title="Questions" scrolling="no"></iframe>
     </div>
   </div>
 
@@ -73,13 +84,8 @@
       <p id="status"></p>
     </section>
 
-    <section id="questionCard" class="card hidden">
-      <h2 id="examHeading">Exam in progress</h2>
-      <iframe id="questionFrame" title="Questions" scrolling="no"></iframe>
-    </section>
-
     <section id="resultCard" class="card">
-      <h2>Result & Report</h2>
+      <h2>Result &amp; Report</h2>
       <div class="row hidden" id="afterSubmitActions">
         <button class="secondary" id="openPdfBtn">Open Report Link</button>
         <button class="secondary" id="shareBtn">Share Report</button>
@@ -99,527 +105,254 @@
 
   <script>
     const EXAM_SECONDS = 90 * 60;
-    const START_HOUR = 16;
-    const START_MIN = 40;
+    const START_HOUR   = 16;
+    const START_MIN    = 40;
     const LOCAL_UNLOCK_KEY = "exam_start_unlocked_forever";
-
     const STORAGE = {
-      active: "exam_active_session",
-      answersPrefix: "exam_answers_",
-      reportPrefix: "exam_report_",
-      reportLinks: "exam_temp_links"
+      active:"exam_active_session", answersPrefix:"exam_answers_",
+      reportPrefix:"exam_report_", reportLinks:"exam_temp_links"
     };
 
-    const examBtn = document.getElementById("examBtn");
-    const statusEl = document.getElementById("status");
-    const timerBox = document.getElementById("timerBox");
-    const timerEl = document.getElementById("timer");
-    const startGateLine = document.getElementById("startGateLine");
-    const instructionCard = document.getElementById("instructionCard");
-    const introCard = document.getElementById("introCard");
-    const questionCard = document.getElementById("questionCard");
-    const resultCard = document.getElementById("resultCard");
-    const snapshotCard = document.getElementById("snapshotCard");
-    const frame = document.getElementById("questionFrame");
-    const openPdfBtn = document.getElementById("openPdfBtn");
-    const shareBtn = document.getElementById("shareBtn");
-    const viewResultBtn = document.getElementById("viewResultBtn");
+    const examBtn           = document.getElementById("examBtn");
+    const statusEl          = document.getElementById("status");
+    const timerBox          = document.getElementById("timerBox");
+    const timerEl           = document.getElementById("timer");
+    const startGateLine     = document.getElementById("startGateLine");
+    const frame             = document.getElementById("questionFrame");
+    const examOverlay       = document.getElementById("examOverlay");
+    const openPdfBtn        = document.getElementById("openPdfBtn");
+    const shareBtn          = document.getElementById("shareBtn");
+    const viewResultBtn     = document.getElementById("viewResultBtn");
     const downloadResultBtn = document.getElementById("downloadResultBtn");
-    const resultView = document.getElementById("resultView");
-    const snapshotView = document.getElementById("snapshotView");
-    const examHeading = document.getElementById("examHeading");
-    const afterSubmitActions = document.getElementById("afterSubmitActions");
-    const shareModalWrap = document.getElementById("shareModalWrap");
-    const shareModalOk = document.getElementById("shareModalOk");
+    const snapshotView      = document.getElementById("snapshotView");
+    const afterSubmitActions= document.getElementById("afterSubmitActions");
+    const shareModalWrap    = document.getElementById("shareModalWrap");
+    const shareModalOk      = document.getElementById("shareModalOk");
 
-    let examRunning = false;
-    let submitted = false;
-    let startAtMs = 0;
-    let submitAtMs = 0;
-    let inactiveStartMs = 0;
-    let sid = "";
-    let timerInt = null;
-    let gateTimerInt = null;
-    let reportUrl = "";
+    let examRunning=false, submitted=false, startAtMs=0, submitAtMs=0;
+    let inactiveStartMs=0, sid="", timerInt=null, gateTimerInt=null, reportUrl="";
 
     const report = {
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "Unknown",
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone||"Unknown",
       userAgent: navigator.userAgent,
-      exam: { durationSeconds: EXAM_SECONDS, startAt: null, submitAt: null, submitReason: null, sessionId: null },
-      inactiveSessions: [],
-      events: [],
-      result: {
-        totalQuestions: 0, attempted: 0, correct: 0, wrong: 0, unattempted: 0,
-        baseScore: 0, leaveIncidentCount: 0, penaltyMarks: 0, finalScore: 0, selections: []
-      },
-      summary: { totalInactiveMs: 0 }
+      exam:{ durationSeconds:EXAM_SECONDS, startAt:null, submitAt:null, submitReason:null, sessionId:null },
+      inactiveSessions:[], events:[],
+      result:{ totalQuestions:0,attempted:0,correct:0,wrong:0,unattempted:0,baseScore:0,leaveIncidentCount:0,penaltyMarks:0,finalScore:0,selections:[] },
+      summary:{ totalInactiveMs:0 }
     };
 
-    function setStatus(msg, type) {
-      statusEl.innerHTML = "";
-      const span = document.createElement("span");
-      span.textContent = msg;
-      if (type === "bad") span.className = "bad";
-      if (type === "ok") span.className = "ok";
-      if (type === "warn") span.className = "warn";
-      statusEl.appendChild(span);
-    }
-    function nowIso() { return new Date().toISOString(); }
-    function mmss(sec) {
-      const s = Math.max(0, Math.floor(sec));
-      return `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
-    }
+    function setStatus(msg,type){ statusEl.innerHTML=""; const s=document.createElement("span"); s.textContent=msg; if(type) s.className=type; statusEl.appendChild(s); }
+    function nowIso(){ return new Date().toISOString(); }
+    function mmss(sec){ const s=Math.max(0,Math.floor(sec)); return `${String(Math.floor(s/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`; }
+    function canonicalDate(tsIso){ return new Date(tsIso||Date.now()).toLocaleString(undefined,{weekday:"short",year:"numeric",month:"short",day:"2-digit",hour:"2-digit",minute:"2-digit"}); }
+    function durationText(ms){ const s=Math.max(0,Math.floor(ms/1000)),h=Math.floor(s/3600),m=Math.floor((s%3600)/60),r=s%60,p=[]; if(h)p.push(`${h}h`); if(m)p.push(`${m}min`); p.push(`${r}sec`); return p.join(" "); }
+    function esc(t){ return String(t).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;"); }
+    function renderSnapshot(){ snapshotView.textContent=JSON.stringify({exam:report.exam,result:report.result,summary:report.summary,inactiveSessions:report.inactiveSessions,recentEvents:report.events.slice(-6)},null,2); }
+    function saveDraft(){ if(!sid)return; localStorage.setItem(STORAGE.reportPrefix+sid,JSON.stringify(report)); }
+    function addEvent(type,details={}){ report.events.push({at:nowIso(),type,...details}); saveDraft(); renderSnapshot(); }
+    function safeCleanup(){ if(reportUrl)URL.revokeObjectURL(reportUrl); reportUrl=""; localStorage.removeItem(STORAGE.reportLinks); }
+    function removeSession(s){ if(!s)return; localStorage.removeItem(STORAGE.answersPrefix+s); localStorage.removeItem(STORAGE.reportPrefix+s); }
+    function clearOld(){ const p=localStorage.getItem(STORAGE.active); if(p)removeSession(p); safeCleanup(); for(let i=localStorage.length-1;i>=0;i--){ const k=localStorage.key(i); if(!k)continue; if(k.startsWith(STORAGE.answersPrefix)||k.startsWith(STORAGE.reportPrefix))localStorage.removeItem(k); } }
+    function requestFS(){ const el=document.documentElement; if(!el.requestFullscreen)return Promise.resolve(); return el.requestFullscreen({navigationUI:"hide"}); }
+    function tryOL(){ if(!screen.orientation||!screen.orientation.lock){addEvent("orientation_lock_na");return;} screen.orientation.lock("portrait").then(()=>addEvent("orientation_lock_ok")).catch(()=>addEvent("orientation_lock_fail")); }
+    function getQUrl(){ return new URL("./questions.html",window.location.href).toString(); }
+    function todayGateMs(){ const d=new Date(); d.setHours(START_HOUR,START_MIN,0,0); return d.getTime(); }
 
-    /** Single canonical date/time string for exports (shown once where needed). */
-    function canonicalReportDate(tsIso) {
-      return new Date(tsIso || Date.now()).toLocaleString(undefined, {
-        weekday: "short", year: "numeric", month: "short", day: "2-digit",
-        hour: "2-digit", minute: "2-digit"
-      });
-    }
+    function isStartGateOpen(){
+      // ── TIME GATE DISABLED FOR TESTING ──
+      // Button always enabled. To re-enable time-based lock, comment the next line
+      // and uncomment the block below it.
+      return true;
 
-    function renderSnapshot() {
-      snapshotView.textContent = JSON.stringify({
-        exam: report.exam,
-        result: report.result,
-        summary: report.summary,
-        inactiveSessions: report.inactiveSessions,
-        recentEvents: report.events.slice(-6)
-      }, null, 2);
-    }
-    function saveDraft() {
-      if (!sid) return;
-      localStorage.setItem(STORAGE.reportPrefix + sid, JSON.stringify(report));
-    }
-    function addEvent(type, details = {}) {
-      report.events.push({ at: nowIso(), type, ...details });
-      saveDraft();
-      renderSnapshot();
-    }
-
-    function durationText(ms) {
-      const s = Math.max(0, Math.floor(ms / 1000));
-      const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), r = s % 60;
-      const parts = [];
-      if (h) parts.push(`${h} h`);
-      if (m) parts.push(`${m} min`);
-      parts.push(`${r} sec`);
-      return parts.join(" ");
-    }
-
-    function inactiveLinesForReports(data, reportDateSingle) {
-      if (!data.inactiveTimeline.length) {
-        return `Report (${reportDateSingle}) — Away: kabhi nahi.`;
-      }
-      return data.inactiveTimeline.map((ln, i) => `Away ${i + 1} (${reportDateSingle} timeline): ${ln}`).join("\n");
-    }
-
-    function safeCleanupLinks() {
-      if (reportUrl) URL.revokeObjectURL(reportUrl);
-      reportUrl = "";
-      localStorage.removeItem(STORAGE.reportLinks);
-    }
-
-    function removeSessionData(session) {
-      if (!session) return;
-      localStorage.removeItem(STORAGE.answersPrefix + session);
-      localStorage.removeItem(STORAGE.reportPrefix + session);
-    }
-
-    function clearOldExamDataOnNewStart() {
-      const previous = localStorage.getItem(STORAGE.active);
-      if (previous) removeSessionData(previous);
-      safeCleanupLinks();
-      for (let i = localStorage.length - 1; i >= 0; i -= 1) {
-        const key = localStorage.key(i);
-        if (!key) continue;
-        if (key.startsWith(STORAGE.answersPrefix) || key.startsWith(STORAGE.reportPrefix)) localStorage.removeItem(key);
-      }
-    }
-
-    function requestFullscreenBestEffort() {
-      const el = document.documentElement;
-      if (!el.requestFullscreen) return Promise.resolve();
-      return el.requestFullscreen({ navigationUI: "hide" });
-    }
-    function tryOrientationLock() {
-      if (!screen.orientation || !screen.orientation.lock) { addEvent("orientation_lock_na"); return; }
-      screen.orientation.lock("portrait").then(() => addEvent("orientation_lock_ok")).catch(() => addEvent("orientation_lock_fail"));
-    }
-
-    function getQuestionsUrl() {
-      return new URL("./questions.html", window.location.href).toString();
-    }
-
-    /** Today START_HOUR:START_MIN — used for countdown + unlock once passed. */
-    function todayGateMs() {
-      const d = new Date();
-      d.setHours(START_HOUR, START_MIN, 0, 0);
-      return d.getTime();
-    }
-
-    function isStartGateOpen() {
-      if (localStorage.getItem(LOCAL_UNLOCK_KEY)) return true;
-      if (Date.now() >= todayGateMs()) {
-        localStorage.setItem(LOCAL_UNLOCK_KEY, "1");
+      /* // ── TIME GATE (uncomment to enable) ──
+      if(localStorage.getItem(LOCAL_UNLOCK_KEY)) return true;
+      if(Date.now() >= todayGateMs()){
+        localStorage.setItem(LOCAL_UNLOCK_KEY,"1");
         return true;
       }
       return false;
+      */
     }
 
-    function updateStartGateUi() {
-      if (examRunning) return;
-      if (isStartGateOpen()) {
-        examBtn.disabled = false;
-        startGateLine.textContent = "";
-        if (gateTimerInt) clearInterval(gateTimerInt);
-        gateTimerInt = null;
-        return;
-      }
-      examBtn.disabled = true;
-      const gate = todayGateMs();
-      const remaining = Math.max(0, Math.ceil((gate - Date.now()) / 1000));
-      startGateLine.textContent = `Start locked — opens in ~${Math.floor(remaining / 3600)}h ${Math.floor((remaining % 3600) / 60)}m ${remaining % 60}s`;
-      if (!gateTimerInt) {
-        gateTimerInt = setInterval(updateStartGateUi, 500);
-      }
+    function updateStartGateUi(){
+      if(examRunning)return;
+      if(isStartGateOpen()){ examBtn.disabled=false; startGateLine.textContent=""; if(gateTimerInt)clearInterval(gateTimerInt); gateTimerInt=null; return; }
+      examBtn.disabled=true;
+      const remaining=Math.max(0,Math.ceil((todayGateMs()-Date.now())/1000));
+      startGateLine.textContent=`Start locked — opens in ~${Math.floor(remaining/3600)}h ${Math.floor((remaining%3600)/60)}m ${remaining%60}s`;
+      if(!gateTimerInt) gateTimerInt=setInterval(updateStartGateUi,500);
     }
 
-    function markInactiveStart(reason) {
-      if (!examRunning || submitted || inactiveStartMs) return;
-      inactiveStartMs = Date.now();
-      addEvent("inactive_start_page_hidden", { reason });
+    function markInactiveStart(reason){ if(!examRunning||submitted||inactiveStartMs)return; inactiveStartMs=Date.now(); addEvent("inactive_start_page_hidden",{reason}); }
+    function markInactiveEnd(reason){ if(!examRunning||submitted||!inactiveStartMs)return; const end=Date.now(),ms=end-inactiveStartMs; report.inactiveSessions.push({leftAtIso:new Date(inactiveStartMs).toISOString(),returnedAtIso:new Date(end).toISOString(),awayMs:ms}); report.summary.totalInactiveMs+=ms; inactiveStartMs=0; addEvent("inactive_end_page_visible",{reason,awaySeconds:Math.round(ms/1000)}); }
+
+    function computeResult(){
+      const raw=localStorage.getItem(STORAGE.answersPrefix+sid); if(!raw)return;
+      let data=null; try{data=JSON.parse(raw);}catch{data=null;}
+      if(!data||!Array.isArray(data.questions))return;
+      const answers=data.answers||{}; let attempted=0,correct=0,wrong=0,unattempted=0; const selections=[];
+      data.questions.forEach(q=>{ const sel=answers[q.id]||null; if(!sel)unattempted++; else{ attempted++; if(sel===q.correctOption)correct++; else wrong++; } selections.push({questionId:q.id,question:q.question,options:q.options,selectedOption:sel,correctOption:q.correctOption,isCorrect:!!sel&&sel===q.correctOption}); });
+      const lc=report.inactiveSessions.length, pm=Math.floor(lc/3), bs=correct;
+      report.result={totalQuestions:data.questions.length,attempted,correct,wrong,unattempted,baseScore:bs,leaveIncidentCount:lc,penaltyMarks:pm,finalScore:bs-pm,selections};
     }
 
-    function markInactiveEnd(reason) {
-      if (!examRunning || submitted || !inactiveStartMs) return;
-      const end = Date.now();
-      const ms = end - inactiveStartMs;
-      report.inactiveSessions.push({
-        leftAtIso: new Date(inactiveStartMs).toISOString(),
-        returnedAtIso: new Date(end).toISOString(),
-        awayMs: ms
-      });
-      report.summary.totalInactiveMs += ms;
-      inactiveStartMs = 0;
-      addEvent("inactive_end_page_visible", { reason, awaySeconds: Math.round(ms / 1000) });
+    function buildReportData(){
+      const iso=submitAtMs?new Date(submitAtMs).toISOString():nowIso();
+      const dateStr=canonicalDate(iso);
+      const durMs=submitAtMs&&startAtMs?submitAtMs-startAtMs:0;
+      const awayLines=report.inactiveSessions.map((s,i)=>`${i+1}) Gaye: ${canonicalDate(s.leftAtIso)} | Aaye: ${canonicalDate(s.returnedAtIso)} | Kitni der: ${durationText(s.awayMs)}`);
+      return { dateStr, examSpan:`${canonicalDate(report.exam.startAt)} → ${canonicalDate(report.exam.submitAt)} (${durationText(durMs)})`, awayLines, machineReport:report };
     }
 
-    function computeResult() {
-      const raw = localStorage.getItem(STORAGE.answersPrefix + sid);
-      if (!raw) return;
-      let data = null;
-      try { data = JSON.parse(raw); } catch { data = null; }
-      if (!data || !Array.isArray(data.questions)) return;
+    function buildReportHtmlBody(d){
+      const r=d.machineReport.result;
+      const awayHtml=d.awayLines.length
+        ? d.awayLines.map(l=>`<li>${esc(l)}</li>`).join("")
+        : "<li>Kabhi bahar nahi gaye.</li>";
 
-      const answers = data.answers || {};
-      let attempted = 0, correct = 0, wrong = 0, unattempted = 0;
-      const selections = [];
-      data.questions.forEach((q) => {
-        const selected = answers[q.id] || null;
-        if (!selected) unattempted += 1;
-        else {
-          attempted += 1;
-          if (selected === q.correctOption) correct += 1; else wrong += 1;
-        }
-        selections.push({
-          questionId: q.id,
-          question: q.question,
-          selectedOption: selected,
-          correctOption: q.correctOption,
-          isCorrect: !!selected && selected === q.correctOption
-        });
-      });
-      const leaveCount = report.inactiveSessions.length;
-      const penaltyMarks = Math.floor(leaveCount / 3);
-      const baseScore = correct;
-      report.result = {
-        totalQuestions: data.questions.length,
-        attempted, correct, wrong, unattempted,
-        baseScore, leaveIncidentCount: leaveCount, penaltyMarks,
-        finalScore: baseScore - penaltyMarks,
-        selections
-      };
-    }
+      const qHtml=r.selections.map((s,i)=>{
+        const badge=!s.selectedOption
+          ? `<span style="background:#1e293b;color:#94a3b8;font-size:11px;padding:1px 8px;border-radius:10px;margin-left:6px">Skip</span>`
+          : s.isCorrect
+            ? `<span style="background:#14532d;color:#86efac;font-size:11px;padding:1px 8px;border-radius:10px;margin-left:6px">&#10003; Sahi</span>`
+            : `<span style="background:#4c0519;color:#fda4af;font-size:11px;padding:1px 8px;border-radius:10px;margin-left:6px">&#10007; Galat</span>`;
 
-    function buildFinalReportObj() {
-      const reportDateIso = submitAtMs ? new Date(submitAtMs).toISOString() : nowIso();
-      const reportDateSingle = canonicalReportDate(reportDateIso);
-      const examDurationMs = submitAtMs && startAtMs ? submitAtMs - startAtMs : 0;
+        const optHtml=s.options?Object.entries(s.options).map(([k,v])=>{
+          let style="color:#94a3b8", note="";
+          if(k===s.correctOption&&k===s.selectedOption){ style="color:#86efac;font-weight:700"; note=" &#10003; (aapka jawab — sahi)"; }
+          else if(k===s.correctOption){ style="color:#86efac;font-weight:700"; note=" &#10003; (sahi jawab)"; }
+          else if(k===s.selectedOption){ style="color:#fda4af;font-weight:700"; note=" &#10007; (aapka jawab)"; }
+          return `<div style="display:flex;gap:6px;padding:2px 0"><span style="min-width:20px;${style}">${esc(k)}.</span><span style="${style}">${esc(v)}${note}</span></div>`;
+        }).join(""):"";
 
-      const inactiveNatural = report.inactiveSessions.map((s, idx) =>
-        `${idx + 1}) Left ${canonicalReportDate(s.leftAtIso)} — Back ${canonicalReportDate(s.returnedAtIso)} — Away ${durationText(s.awayMs)}.`
-      );
-
-      const summaryLine =
-        `${reportDateSingle}: Attempt ${report.result.attempted}/${report.result.totalQuestions} — right ${report.result.correct}, wrong ${report.result.wrong}, skip ${report.result.unattempted} — score ${report.result.baseScore} — penalty −${report.result.penaltyMarks} — final ${report.result.finalScore}.`;
-
-      return {
-        reportDateSingle,
-        reportDateIso,
-        examWindowShort: `${canonicalReportDate(report.exam.startAt)} → ${canonicalReportDate(report.exam.submitAt)} (${durationText(examDurationMs)})`,
-        summaryInWords: summaryLine,
-        inactiveTimeline: inactiveNatural,
-        machineReport: report
-      };
-    }
-
-    function resultOnlyHtml(data) {
-      const r = data.machineReport.result;
-      const inactiveBlock = inactiveLinesForReports(data, data.reportDateSingle);
-      const qlines = r.selections.map((s, i) => {
-        const st = !s.selectedOption ? "skipped" : s.isCorrect ? "right" : "wrong";
-        return `<li>Q${i + 1} — ${s.question}<br>Marked: ${s.selectedOption ?? "none"} · Answer: ${s.correctOption} · ${st}</li>`;
+        return `<li style="background:#0d1f38;border:1px solid #1e3a5f;border-radius:8px;padding:10px 12px;margin-bottom:8px;font-size:13px;line-height:1.7;list-style:none">
+          <div style="font-weight:700;color:#e2e8f0;margin-bottom:6px">Q${i+1}. ${esc(s.question)} ${badge}</div>
+          ${optHtml}
+        </li>`;
       }).join("");
-      return `<!doctype html><html><head><meta charset="UTF-8"><title>Result</title>
-<style>body{font-family:Georgia,serif;margin:22px;line-height:1.75;color:#111}</style></head><body>
-<p><strong>${data.reportDateSingle}</strong></p>
-<p>${data.summaryInWords}</p>
-<p>${data.examWindowShort}</p>
-<p style="white-space:pre-wrap">${inactiveBlock}</p>
-<ul>${qlines}</ul>
-</body></html>`;
+
+      return `
+        <div style="margin-bottom:16px">
+          <h3 style="margin:0 0 8px;font-size:15px;color:#93c5fd;border-bottom:1px solid #1e3a5f;padding-bottom:4px">Exam Summary</h3>
+          <div style="background:#0d1f38;border-radius:8px;padding:10px 12px;font-size:14px;line-height:2">
+            <div><span style="color:#94a3b8">Date: </span>${esc(d.dateStr)}</div>
+            <div><span style="color:#94a3b8">Duration: </span>${esc(d.examSpan)}</div>
+            <div><span style="color:#94a3b8">Total: </span>${r.totalQuestions} &nbsp;|&nbsp; <span style="color:#94a3b8">Attempt: </span>${r.attempted} &nbsp;|&nbsp; <span style="color:#94a3b8">Skip: </span>${r.unattempted}</div>
+            <div><span style="color:#94a3b8">Sahi: </span><b style="color:#86efac">${r.correct}</b> &nbsp;|&nbsp; <span style="color:#94a3b8">Galat: </span><b style="color:#fda4af">${r.wrong}</b></div>
+            <div><span style="color:#94a3b8">Base Score: </span>${r.baseScore} &nbsp;|&nbsp; <span style="color:#94a3b8">Penalty: </span>&#8722;${r.penaltyMarks} &nbsp;|&nbsp; <span style="color:#94a3b8">Final: </span><b style="color:#fbbf24">${r.finalScore}</b></div>
+          </div>
+          <p style="font-size:11px;color:#64748b;margin:4px 0 0">Penalty: har 3 baar bahar jane par &minus;1 mark</p>
+        </div>
+        <div style="margin-bottom:16px">
+          <h3 style="margin:0 0 8px;font-size:15px;color:#93c5fd;border-bottom:1px solid #1e3a5f;padding-bottom:4px">Bahar Jane Ka Record</h3>
+          <ul style="padding:0;margin:0">${awayHtml}</ul>
+        </div>
+        <div>
+          <h3 style="margin:0 0 8px;font-size:15px;color:#93c5fd;border-bottom:1px solid #1e3a5f;padding-bottom:4px">Questions &amp; Answers</h3>
+          <ul style="padding:0;margin:0">${qHtml}</ul>
+        </div>`;
     }
 
-    function reportHtml(data) {
-      const r = data.machineReport.result;
-      const inactiveBlock = inactiveLinesForReports(data, data.reportDateSingle);
-      const qlines = r.selections.map((s, i) => {
-        const st = !s.selectedOption ? "skipped" : s.isCorrect ? "right" : "wrong";
-        return `<li>Q${i + 1} — ${s.question}<br>Marked: ${s.selectedOption ?? "none"} · Answer: ${s.correctOption} · ${st}</li>`;
-      }).join("");
-      return `<!doctype html><html><head><meta charset="UTF-8"><title>Full Report</title>
-<style>body{font-family:Georgia,serif;margin:22px;line-height:1.75;color:#111}</style></head><body>
-<p><strong>Report stamp (once): ${data.reportDateSingle}</strong></p>
-<p>${data.summaryInWords}</p>
-<p>Exam span: ${data.examWindowShort}</p>
-<p style="white-space:pre-wrap"><strong>Away timeline</strong><br>${inactiveBlock}</p>
-<ul>${qlines}</ul>
-<p style="font-size:85%;opacity:.85">Penalty rule: har 3 away par −1</p>
-</body></html>`;
+    function buildFullPage(d){
+      return `<!doctype html><html><head><meta charset="UTF-8"><title>Exam Report</title>
+<style>body{font-family:Arial,sans-serif;margin:0;padding:20px;background:#0b1220;color:#e2e8f0}li{color:#cbd5e1}</style>
+</head><body>${buildReportHtmlBody(d)}</body></html>`;
     }
 
-    function buildPlainReportText(data) {
-      const inactiveBlock = inactiveLinesForReports(data, data.reportDateSingle);
-      const qtext = data.machineReport.result.selections.map((s, i) => {
-        const st = !s.selectedOption ? "skipped" : s.isCorrect ? "right" : "wrong";
-        return `Q${i + 1} — ${s.question} | Marked: ${s.selectedOption ?? "none"} | Answer: ${s.correctOption} | ${st}`;
-      }).join("\n");
-      return `Report (${data.reportDateSingle})\n${data.summaryInWords}\n${data.examWindowShort}\n\n${inactiveBlock}\n\nQuestions:\n${qtext}`;
+    function buildPlainText(d){
+      const r=d.machineReport.result;
+      const away=d.awayLines.length?d.awayLines.join("\n"):"Kabhi bahar nahi gaye.";
+      const qtext=r.selections.map((s,i)=>{
+        const opts=s.options?Object.entries(s.options).map(([k,v])=>{
+          let note="";
+          if(k===s.correctOption&&k===s.selectedOption)note=" <-- aapka jawab (SAHI)";
+          else if(k===s.correctOption)note=" <-- sahi jawab";
+          else if(k===s.selectedOption)note=" <-- aapka jawab (GALAT)";
+          return `  ${k}. ${v}${note}`;
+        }).join("\n"):"";
+        const st=!s.selectedOption?"Skip":s.isCorrect?"Sahi":"Galat";
+        return `Q${i+1}. ${s.question} [${st}]\n${opts}`;
+      }).join("\n\n");
+      return `EXAM REPORT\n${"=".repeat(40)}\nDate: ${d.dateStr}\nDuration: ${d.examSpan}\n\nSCORE\nTotal: ${r.totalQuestions} | Attempt: ${r.attempted} | Skip: ${r.unattempted}\nSahi: ${r.correct} | Galat: ${r.wrong}\nBase: ${r.baseScore} | Penalty: -${r.penaltyMarks} | Final: ${r.finalScore}\n\nBAHAR JANE KA RECORD\n${away}\n\nQUESTIONS\n${"=".repeat(40)}\n${qtext}`;
     }
 
-    function download(name, content, type) {
-      const url = URL.createObjectURL(new Blob([content], { type }));
-      const a = document.createElement("a");
-      a.href = url; a.download = name;
-      document.body.appendChild(a); a.click(); a.remove();
-      URL.revokeObjectURL(url);
+    function download(name,content,type){ const url=URL.createObjectURL(new Blob([content],{type})); const a=document.createElement("a"); a.href=url; a.download=name; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); }
+
+    function enterExamOnlyView(){ document.body.className="in-exam"; examOverlay.classList.add("active"); timerBox.style.display="block"; }
+    function exitExamOnlyView(){ document.body.className="pre-exam"; examOverlay.classList.remove("active"); timerBox.style.display="none"; timerBox.classList.remove("timer-warn"); afterSubmitActions.classList.remove("hidden"); }
+
+    function startExam(){
+      if(window.location.hostname==="github.com"){setStatus("GitHub Pages (github.io) link se kholo.","bad");return;}
+      if(!isStartGateOpen()){setStatus("Abhi Start time gate band hai.","warn");return;}
+      if(examRunning)return;
+      clearOld(); submitted=false;
+      report.inactiveSessions=[]; report.events=[]; report.summary={totalInactiveMs:0};
+      report.result={totalQuestions:0,attempted:0,correct:0,wrong:0,unattempted:0,baseScore:0,leaveIncidentCount:0,penaltyMarks:0,finalScore:0,selections:[]};
+      report.exam={durationSeconds:EXAM_SECONDS,startAt:null,submitAt:null,submitReason:null,sessionId:null};
+      examRunning=true; sid=`sess_${Date.now()}`; localStorage.setItem(STORAGE.active,sid);
+      startAtMs=Date.now(); report.exam.startAt=new Date(startAtMs).toISOString(); report.exam.sessionId=sid;
+      addEvent("exam_started"); enterExamOnlyView();
+      frame.src=`${getQUrl()}?session=${encodeURIComponent(sid)}`;
+      setStatus("Exam started.","ok");
+      requestFS().then(()=>addEvent("fullscreen_ok")).catch(()=>addEvent("fullscreen_fail")); tryOL();
+      const endTs=startAtMs+EXAM_SECONDS*1000;
+      if(timerInt)clearInterval(timerInt);
+      timerInt=setInterval(()=>{ const rem=Math.ceil((endTs-Date.now())/1000); timerEl.textContent=mmss(rem); timerBox.classList.toggle("timer-warn",rem>0&&rem<=10*60); if(rem<=0){clearInterval(timerInt);timerEl.textContent="00:00";} },300);
     }
 
-    function enterExamOnlyView() {
-      instructionCard.classList.add("hidden");
-      introCard.classList.add("hidden");
-      resultCard.classList.add("hidden");
-      snapshotCard.classList.add("hidden");
-      questionCard.classList.remove("hidden");
-      frame.style.display = "block";
-      timerBox.style.display = "block";
-      document.body.classList.remove("post-submit-scroll");
-
-      examBtn.style.position = "fixed";
-      examBtn.style.bottom = "max(12px, env(safe-area-inset-bottom))";
-      examBtn.style.right = "max(12px, env(safe-area-inset-right))";
-      examBtn.style.left = "";
-      examBtn.style.zIndex = "9999";
-      examBtn.textContent = "Submit Exam";
-      document.body.appendChild(examBtn);
-
-      timerBox.style.top = "auto";
-      timerBox.style.right = "";
-      timerBox.style.bottom = "max(76px, calc(env(safe-area-inset-bottom) + 76px))";
-      timerBox.style.left = "50%";
-      timerBox.style.transform = "translateX(-50%)";
-      timerBox.style.width = "fit-content";
+    function submitExam(reason="manual"){
+      if(!examRunning||submitted)return;
+      submitted=true; examRunning=false; submitAtMs=Date.now();
+      if(inactiveStartMs)markInactiveEnd("submit_flush");
+      if(timerInt)clearInterval(timerInt);
+      if(document.fullscreenElement&&document.exitFullscreen)document.exitFullscreen().catch(()=>{});
+      report.exam.submitAt=new Date(submitAtMs).toISOString(); report.exam.submitReason=reason;
+      addEvent("exam_submitted",{reason}); computeResult(); saveDraft(); exitExamOnlyView();
+      examBtn.disabled=false; examBtn.textContent="Start Exam";
+      setStatus("Submit ho gayi.","ok"); shareModalWrap.classList.add("show");
+      renderSnapshot(); updateStartGateUi();
     }
 
-    function exitExamOnlyView() {
-      questionCard.classList.add("hidden");
-      timerBox.style.top = "";
-      timerBox.style.display = "none";
-      timerBox.classList.remove("timer-warn");
-      timerBox.style.bottom = ""; timerBox.style.left = ""; timerBox.style.transform = "";
-      timerBox.style.top = "10px"; timerBox.style.right = "10px";
+    window.addEventListener("message",e=>{ if(e.data==="submit_exam")submitExam("manual"); });
+    examBtn.addEventListener("click",()=>{ if(examRunning&&!submitted)submitExam("manual"); else startExam(); });
+    shareModalOk.addEventListener("click",()=>shareModalWrap.classList.remove("show"));
 
-      instructionCard.classList.remove("hidden");
-      introCard.classList.remove("hidden");
-      resultCard.classList.remove("hidden");
-      snapshotCard.classList.remove("hidden");
-      examHeading.textContent = "Exam completed";
-      document.getElementById("introCard").appendChild(examBtn);
-      document.body.classList.add("post-submit-scroll");
-      afterSubmitActions.classList.remove("hidden");
-    }
-
-    function startExam() {
-      if (window.location.hostname === "github.com") {
-        setStatus("GitHub Pages (github.io) link se kholo.", "bad");
-        return;
-      }
-      if (!isStartGateOpen()) {
-        setStatus("Abhi Start time gate band hai.", "warn");
-        return;
-      }
-      if (examRunning) return;
-      clearOldExamDataOnNewStart();
-      submitted = false;
-      report.inactiveSessions = [];
-      report.events = [];
-      report.summary = { totalInactiveMs: 0 };
-      report.result = {
-        totalQuestions: 0, attempted: 0, correct: 0, wrong: 0, unattempted: 0,
-        baseScore: 0, leaveIncidentCount: 0, penaltyMarks: 0, finalScore: 0, selections: []
-      };
-      report.exam = { durationSeconds: EXAM_SECONDS, startAt: null, submitAt: null, submitReason: null, sessionId: null };
-
-      examRunning = true;
-      sid = `sess_${Date.now()}`;
-      localStorage.setItem(STORAGE.active, sid);
-      startAtMs = Date.now();
-      report.exam.startAt = new Date(startAtMs).toISOString();
-      report.exam.sessionId = sid;
-      addEvent("exam_started");
-
-      enterExamOnlyView();
-      frame.src = `${getQuestionsUrl()}?session=${encodeURIComponent(sid)}`;
-      examHeading.textContent = "Exam in progress";
-      setStatus("Exam started.", "ok");
-
-      requestFullscreenBestEffort().then(() => addEvent("fullscreen_ok")).catch(() => addEvent("fullscreen_fail"));
-      tryOrientationLock();
-
-      const endTs = startAtMs + EXAM_SECONDS * 1000;
-      if (timerInt) clearInterval(timerInt);
-      timerInt = setInterval(() => {
-        const rem = Math.ceil((endTs - Date.now()) / 1000);
-        timerEl.textContent = mmss(rem);
-        timerBox.classList.toggle("timer-warn", rem > 0 && rem <= 10 * 60);
-        if (rem <= 0) {
-          clearInterval(timerInt);
-          timerEl.textContent = "00:00";
-          setStatus("Time over — Submit dabaye.", "warn");
-        }
-      }, 300);
-    }
-
-    function submitExam(reason = "manual") {
-      if (!examRunning || submitted) return;
-      submitted = true;
-      examRunning = false;
-      submitAtMs = Date.now();
-      if (inactiveStartMs) markInactiveEnd("submit_flush");
-      if (timerInt) clearInterval(timerInt);
-
-      if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {});
-
-      report.exam.submitAt = new Date(submitAtMs).toISOString();
-      report.exam.submitReason = reason;
-      addEvent("exam_submitted", { reason });
-      computeResult();
-      saveDraft();
-      exitExamOnlyView();
-
-      examBtn.disabled = false;
-      examBtn.textContent = "Start Exam";
-
-      setStatus("Submit ho gayi.", "ok");
-      shareModalWrap.classList.add("show");
-
-      renderSnapshot();
-      updateStartGateUi();
-    }
-
-    examBtn.addEventListener("click", () => {
-      if (examRunning && !submitted) submitExam("manual");
-      else startExam();
+    openPdfBtn.addEventListener("click",()=>{
+      if(!submitted)return;
+      const d=buildReportData(), html=buildFullPage(d);
+      if(reportUrl)URL.revokeObjectURL(reportUrl);
+      reportUrl=URL.createObjectURL(new Blob([html],{type:"text/html"}));
+      window.open(reportUrl,"_blank");
+    });
+    shareBtn.addEventListener("click",async()=>{
+      if(!submitted)return;
+      const d=buildReportData(), txt=buildPlainText(d);
+      const fname=`exam-report-${Date.now()}.txt`;
+      const blob=new Blob([txt],{type:"text/plain;charset=utf-8"}), file=new File([blob],fname,{type:"text/plain"});
+      try{
+        if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({title:"Exam report",text:txt.slice(0,2000),files:[file]});setStatus("Share ok.","ok");}
+        else if(navigator.share){await navigator.share({title:"Exam report",text:txt});setStatus("Share ok.","ok");}
+        else if(navigator.clipboard){await navigator.clipboard.writeText(txt);setStatus("Copied to clipboard.","warn");}
+        else setStatus("Share not supported.","bad");
+      }catch{ try{await navigator.share({text:txt});setStatus("Share ok.","ok");}catch{setStatus("Share cancel/fail.","bad");} }
+    });
+    viewResultBtn.addEventListener("click",()=>{
+      if(!submitted)return;
+      const d=buildReportData(), html=buildFullPage(d);
+      const u=URL.createObjectURL(new Blob([html],{type:"text/html"}));
+      window.open(u,"_blank"); setTimeout(()=>URL.revokeObjectURL(u),120000);
+    });
+    downloadResultBtn.addEventListener("click",()=>{
+      if(!submitted)return;
+      const d=buildReportData(); download(`exam-result-${Date.now()}.html`,buildFullPage(d),"text/html;charset=utf-8");
     });
 
-    shareModalOk.addEventListener("click", () => shareModalWrap.classList.remove("show"));
+    document.addEventListener("visibilitychange",()=>{ if(!examRunning||submitted)return; if(document.visibilityState==="hidden")markInactiveStart("visibility_hidden_background"); if(document.visibilityState==="visible")markInactiveEnd("visibility_visible_foreground"); });
+    window.addEventListener("pagehide",()=>{ if(examRunning&&!submitted)markInactiveStart("pagehide_navigation"); });
+    window.addEventListener("pageshow",e=>{ if(examRunning&&!submitted&&!e.persisted)markInactiveEnd("pageshow_back"); });
 
-    openPdfBtn.addEventListener("click", () => {
-      if (!submitted) return;
-      const data = buildFinalReportObj();
-      const html = reportHtml(data);
-      if (reportUrl) URL.revokeObjectURL(reportUrl);
-      reportUrl = URL.createObjectURL(new Blob([html], { type: "text/html" }));
-      window.open(reportUrl, "_blank");
-    });
-
-    shareBtn.addEventListener("click", async () => {
-      if (!submitted) return;
-      const data = buildFinalReportObj();
-      const txt = buildPlainReportText(data);
-      const fname = `exam-report-${Date.now()}.txt`;
-      const blob = new Blob([txt], { type: "text/plain;charset=utf-8" });
-      const file = new File([blob], fname, { type: "text/plain" });
-      try {
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          await navigator.share({ title: "Exam report", text: txt.slice(0, 2000), files: [file] });
-          setStatus("Share ok.", "ok");
-        } else if (navigator.share) {
-          await navigator.share({ title: "Exam report", text: txt });
-          setStatus("Share ok.", "ok");
-        } else if (navigator.clipboard) {
-          await navigator.clipboard.writeText(txt);
-          setStatus("Copied to clipboard.", "warn");
-        } else {
-          setStatus("Share not supported.", "bad");
-        }
-      } catch {
-        try {
-          await navigator.share({ text: txt });
-          setStatus("Share ok.", "ok");
-        } catch {
-          setStatus("Share cancel/fail.", "bad");
-        }
-      }
-    });
-
-    viewResultBtn.addEventListener("click", () => {
-      if (!submitted) return;
-      const data = buildFinalReportObj();
-      const html = resultOnlyHtml(data);
-      const u = URL.createObjectURL(new Blob([html], { type: "text/html" }));
-      window.open(u, "_blank");
-      setTimeout(() => URL.revokeObjectURL(u), 120000);
-    });
-
-    downloadResultBtn.addEventListener("click", () => {
-      if (!submitted) return;
-      download(`exam-result-${Date.now()}.html`, resultOnlyHtml(buildFinalReportObj()), "text/html;charset=utf-8");
-    });
-
-    /* Only tab/background switches — avoids wrong triggers from iframe focus. */
-    document.addEventListener("visibilitychange", () => {
-      if (!examRunning || submitted) return;
-      if (document.visibilityState === "hidden") markInactiveStart("visibility_hidden_background");
-      if (document.visibilityState === "visible") markInactiveEnd("visibility_visible_foreground");
-    });
-
-    window.addEventListener("pagehide", () => {
-      if (examRunning && !submitted) markInactiveStart("pagehide_navigation");
-    });
-    window.addEventListener("pageshow", (e) => {
-      if (examRunning && !submitted && !e.persisted) markInactiveEnd("pageshow_back");
-    });
-
-    addEvent("page_loaded");
-    renderSnapshot();
-
-    examBtn.disabled = true;
-    updateStartGateUi();
-
-    if (window.location.hostname === "github.com") setStatus("GitHub Pages (github.io) use karo.", "warn");
-
+    addEvent("page_loaded"); renderSnapshot(); examBtn.disabled=true; updateStartGateUi();
+    if(window.location.hostname==="github.com")setStatus("GitHub Pages (github.io) use karo.","warn");
   </script>
 </body>
 </html>
