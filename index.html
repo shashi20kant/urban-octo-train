@@ -13,51 +13,114 @@
     body{margin:0;font-family:Arial,sans-serif;background:linear-gradient(120deg,#060b16,#0b1220,#111a2d);color:var(--text)}
     body.pre-exam{overflow-y:auto;-webkit-overflow-scrolling:touch}
     body.in-exam{overflow:hidden;position:fixed;width:100%;height:100%}
-    .wrap{max-width:1100px;margin:16px auto;padding:0 12px 28px}
-    .card{background:rgba(18,26,43,.95);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
+
+    /* ── Name Modal ── */
+    #nameModalWrap{
+      position:fixed;inset:0;z-index:20000;
+      display:flex;align-items:center;justify-content:center;
+      background:linear-gradient(135deg,#060b16,#0b1220,#111a2d);
+      padding:20px;
+    }
+    #nameModal{
+      background:rgba(18,26,43,.98);border:1px solid #2b3b5e;
+      border-radius:18px;max-width:420px;width:100%;padding:32px 24px;
+      text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.6);
+    }
+    #nameModal .nm-title{
+      font-size:clamp(20px,5vw,26px);font-weight:700;margin-bottom:6px;
+      background:linear-gradient(90deg,#34d399,#22d3ee,#a78bfa);
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+    }
+    #nameModal .nm-sub{color:#9db0d9;font-size:clamp(13px,3.5vw,15px);margin-bottom:24px}
+    #nameInput{
+      width:100%;padding:14px 16px;border-radius:12px;border:2px solid #2b3b5e;
+      background:#0d1829;color:#e6eeff;font-size:clamp(15px,4vw,18px);font-weight:600;
+      text-align:center;outline:none;letter-spacing:1px;
+      transition:border-color .2s;
+    }
+    #nameInput:focus{border-color:#34d399}
+    #nameInput::placeholder{color:#4a5f82;font-weight:400;letter-spacing:0}
+    #nameError{color:#fb7185;font-size:13px;min-height:18px;margin:8px 0 0}
+    #nameOkBtn{
+      margin-top:18px;width:100%;padding:15px;border:none;border-radius:12px;cursor:pointer;
+      font-size:clamp(15px,4vw,18px);font-weight:700;color:#fff;
+      background:linear-gradient(135deg,#34d399,#059669);
+      box-shadow:0 4px 18px rgba(52,211,153,.35);
+      transition:opacity .15s;
+    }
+    #nameOkBtn:active{opacity:.85}
+
+    /* ── Welcome name banner ── */
+    #welcomeBanner{
+      text-align:center;padding:14px 10px 4px;
+      font-size:clamp(18px,5vw,26px);font-weight:700;letter-spacing:1px;
+    }
+    #welcomeName{
+      background:linear-gradient(90deg,#34d399,#22d3ee,#a78bfa,#fb7185);
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+    }
+
+    .wrap{max-width:1100px;margin:0 auto;padding:0 14px 32px}
+    .card{background:rgba(18,26,43,.95);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:14px}
     .hidden{display:none!important}
-    h1,h2{margin:0 0 8px}
-    p{margin:0 0 10px;color:var(--muted);line-height:1.45}
-    .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-    button{border:0;border-radius:8px;padding:10px 14px;font-weight:700;cursor:pointer}
-    #examBtn{background:var(--accent);color:#072219}
-    #examBtn:disabled{background:#3d4f5f;color:#93a8c4;opacity:0.7;cursor:not-allowed}
-    .secondary{background:#2c3f63;color:#eef5ff}
+    h1{margin:0 0 10px;font-size:clamp(22px,5vw,30px)}
+    h2{margin:0 0 10px;font-size:clamp(17px,4vw,22px)}
+    p{margin:0 0 12px;color:var(--muted);line-height:1.55;font-size:clamp(14px,3.5vw,16px)}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    button{border:0;border-radius:10px;padding:12px 18px;font-weight:700;cursor:pointer;font-size:clamp(14px,3.5vw,16px)}
+    #examBtn{
+      background:linear-gradient(135deg,#34d399,#059669);color:#fff;
+      padding:14px 28px;font-size:clamp(15px,4vw,18px);border-radius:12px;
+      box-shadow:0 4px 15px rgba(52,211,153,.3);
+    }
+    #examBtn:disabled{background:#3d4f5f;color:#93a8c4;opacity:.7;cursor:not-allowed;box-shadow:none}
+    .secondary{background:#2c3f63;color:#eef5ff;padding:11px 16px}
     #timerBox{
-      position:fixed;top:10px;right:10px;
-      background:rgba(8,14,26,.95);border:1px solid #355081;border-radius:10px;
-      padding:6px 10px;display:none;z-index:9999;color:#dfe9ff;
+      position:fixed;top:12px;right:12px;
+      background:rgba(8,14,26,.96);border:1px solid #355081;border-radius:12px;
+      padding:8px 14px;display:none;z-index:9999;color:#dfe9ff;
       width:fit-content;white-space:nowrap;
     }
-    #timerBox.timer-warn{border-color:#f87171;color:#fecaca;background:rgba(62,17,26,.92)}
-    #timer{font-size:20px;letter-spacing:1px}
-    #status{min-height:18px;font-size:13px;color:#c8d7f8}
-    #startGateLine{font-size:13px;color:#a8bdf0;margin-left:8px;display:inline-block;vertical-align:middle}
-    .report-box{background:#0a1221;border:1px solid #29426c;border-radius:10px;padding:12px;line-height:1.7;font-family:Georgia,"Times New Roman",serif}
+    #timerBox.timer-warn{border-color:#f87171;color:#fecaca;background:rgba(62,17,26,.95)}
+    #timer{font-size:clamp(20px,5vw,26px);letter-spacing:2px;font-weight:700}
+    #status{min-height:20px;font-size:clamp(13px,3.5vw,15px);color:#c8d7f8;margin-top:6px}
+    #startGateLine{font-size:clamp(12px,3vw,14px);color:#a8bdf0;margin-left:10px;display:inline-block;vertical-align:middle}
+    .report-box{background:#0a1221;border:1px solid #29426c;border-radius:12px;padding:14px;line-height:1.7}
     .ok{color:#86efac}.bad{color:#fda4af}.warn{color:#fcd34d}
     #snapshotView{
-      margin:0;background:#050b17;border:1px solid #2b4a79;border-radius:10px;padding:10px;max-height:260px;
-      overflow:auto;line-height:1.5;color:#dbeafe;font-family:Consolas,"Courier New",monospace;white-space:pre-wrap;word-break:break-word;
+      margin:0;background:#050b17;border:1px solid #2b4a79;border-radius:10px;padding:12px;max-height:280px;
+      overflow:auto;line-height:1.5;color:#dbeafe;font-family:Consolas,"Courier New",monospace;
+      font-size:clamp(11px,2.8vw,13px);white-space:pre-wrap;word-break:break-word;
     }
-    #examOverlay{
-      display:none;position:fixed;inset:0;z-index:5000;background:#040914;flex-direction:column;
-    }
+    #examOverlay{display:none;position:fixed;inset:0;z-index:5000;background:#040914;flex-direction:column;}
     #examOverlay.active{display:flex}
     #examFrameWrap{flex:1 1 auto;min-height:0;overflow:hidden;}
     #questionFrame{width:100%;height:100%;border:none;display:block;background:#040914;}
-    #shareModalWrap{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.65);z-index:10005;padding:16px;}
+    #shareModalWrap{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.7);z-index:10005;padding:18px;}
     #shareModalWrap.show{display:flex}
-    #shareModal{background:#151f33;border:1px solid #3d5c8c;border-radius:12px;max-width:420px;width:100%;padding:18px;line-height:1.5;color:#e2ecff;font-family:Georgia,serif}
-    #shareModal h3{margin:0 0 10px}
-    #shareModal button{margin-top:12px;background:#2563eb;color:#fff;width:100%;padding:12px;font-weight:700;border-radius:8px;border:none;cursor:pointer}
+    #shareModal{background:#151f33;border:1px solid #3d5c8c;border-radius:14px;max-width:440px;width:100%;padding:22px;line-height:1.6;color:#e2ecff}
+    #shareModal h3{margin:0 0 10px;font-size:18px}
+    #shareModal p{font-size:15px}
+    #shareModal button{margin-top:14px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;width:100%;padding:14px;font-weight:700;border-radius:10px;border:none;cursor:pointer;font-size:16px}
   </style>
 </head>
-<body class="pre-exam">
-  <div id="timerBox"><small>Time left</small> <b id="timer">90:00</b></div>
+<body>
+  <!-- Name Input Modal — shown first, cannot be skipped -->
+  <div id="nameModalWrap">
+    <div id="nameModal">
+      <div class="nm-title">EXAM PORTAL</div>
+      <div class="nm-sub">Shuru karne se pehle apna naam likhein</div>
+      <input type="text" id="nameInput" placeholder="Apna naam yahan likhein" maxlength="50" autocomplete="off" />
+      <div id="nameError"></div>
+      <button type="button" id="nameOkBtn">OK — Aage Badhein</button>
+    </div>
+  </div>
 
-  <div id="shareModalWrap" role="dialog" aria-modal="true" aria-labelledby="shareModalTitle">
+  <div id="timerBox"><small style="font-size:11px;color:#94a3b8">Time left</small><br><b id="timer">90:00</b></div>
+
+  <div id="shareModalWrap" role="dialog" aria-modal="true">
     <div id="shareModal">
-      <h3 id="shareModalTitle">Exam submit ho gayi</h3>
+      <h3>Exam submit ho gayi ✓</h3>
       <p>Share Report button dabakar result share kar dein taaki backup rahe.</p>
       <button type="button" id="shareModalOk">Theek hai</button>
     </div>
@@ -69,85 +132,122 @@
     </div>
   </div>
 
-  <div class="wrap">
-    <section id="instructionCard" class="card">
-      <h2>Instructions</h2>
-      <p>Inactive sirf tab jab ye page background me ho (dusra app/tab). Page par click se inactive record nahi banta.</p>
-    </section>
+  <!-- Main page (hidden until name entered) -->
+  <div id="mainPage" class="hidden">
+    <div id="welcomeBanner">
+      HI, <span id="welcomeName"></span> 👋
+    </div>
 
-    <section id="introCard" class="card">
-      <h1>Online Exam</h1>
-      <div class="row" style="align-items:center;flex-wrap:wrap">
-        <button id="examBtn">Start Exam</button>
-        <span id="startGateLine"></span>
-      </div>
-      <p id="status"></p>
-    </section>
+    <div class="wrap">
+      <section id="instructionCard" class="card">
+        <h2>Instructions</h2>
+        <p>Inactive tab track hoga jab ye page background me ho — dusra app khulne par, browser tab switch karne par, ya back/recent button dabaane par. Page ke andar click karne se inactive record nahi banega.</p>
+      </section>
 
-    <section id="resultCard" class="card">
-      <h2>Result &amp; Report</h2>
-      <div class="row hidden" id="afterSubmitActions">
-        <button class="secondary" id="openPdfBtn">Open Report Link</button>
-        <button class="secondary" id="shareBtn">Share Report</button>
-        <button class="secondary" id="viewResultBtn">View Result</button>
-        <button class="secondary" id="downloadResultBtn">Download Result</button>
-      </div>
-      <div id="resultView" class="report-box hidden"></div>
-    </section>
+      <section id="introCard" class="card">
+        <h1>Online Exam</h1>
+        <div class="row" style="align-items:center;flex-wrap:wrap">
+          <button id="examBtn">Start Exam</button>
+          <span id="startGateLine"></span>
+        </div>
+        <p id="status"></p>
+      </section>
 
-    <section id="snapshotCard" class="card">
-      <h2>Saved Report Preview</h2>
-      <pre id="snapshotView">{
+      <section id="resultCard" class="card">
+        <h2>Result &amp; Report</h2>
+        <div class="row hidden" id="afterSubmitActions">
+          <button class="secondary" id="openPdfBtn">Open Report Link</button>
+          <button class="secondary" id="shareBtn">Share Report</button>
+          <button class="secondary" id="viewResultBtn">View Result</button>
+          <button class="secondary" id="downloadResultBtn">Download Result</button>
+        </div>
+        <div id="resultView" class="report-box hidden"></div>
+      </section>
+
+      <section id="snapshotCard" class="card">
+        <h2>Saved Report Preview</h2>
+        <pre id="snapshotView">{
   "status": "Exam start hone ke baad report draft yahan dikhega."
 }</pre>
-    </section>
+      </section>
+    </div>
   </div>
 
   <script>
-    const EXAM_SECONDS = 90 * 60;
-    const START_HOUR   = 16;
-    const START_MIN    = 40;
+    const EXAM_SECONDS     = 90 * 60;
+    const START_HOUR       = 16;
+    const START_MIN        = 40;
     const LOCAL_UNLOCK_KEY = "exam_start_unlocked_forever";
     const STORAGE = {
       active:"exam_active_session", answersPrefix:"exam_answers_",
       reportPrefix:"exam_report_", reportLinks:"exam_temp_links"
     };
 
-    const examBtn           = document.getElementById("examBtn");
-    const statusEl          = document.getElementById("status");
-    const timerBox          = document.getElementById("timerBox");
-    const timerEl           = document.getElementById("timer");
-    const startGateLine     = document.getElementById("startGateLine");
-    const frame             = document.getElementById("questionFrame");
-    const examOverlay       = document.getElementById("examOverlay");
-    const openPdfBtn        = document.getElementById("openPdfBtn");
-    const shareBtn          = document.getElementById("shareBtn");
-    const viewResultBtn     = document.getElementById("viewResultBtn");
-    const downloadResultBtn = document.getElementById("downloadResultBtn");
-    const snapshotView      = document.getElementById("snapshotView");
-    const afterSubmitActions= document.getElementById("afterSubmitActions");
-    const shareModalWrap    = document.getElementById("shareModalWrap");
-    const shareModalOk      = document.getElementById("shareModalOk");
+    /* ── Name gate ── */
+    let studentName = "";
+
+    const nameModalWrap = document.getElementById("nameModalWrap");
+    const nameInput     = document.getElementById("nameInput");
+    const nameError     = document.getElementById("nameError");
+    const nameOkBtn     = document.getElementById("nameOkBtn");
+    const mainPage      = document.getElementById("mainPage");
+    const welcomeName   = document.getElementById("welcomeName");
+
+    function submitName(){
+      const raw = nameInput.value.trim();
+      if(!raw){ nameError.textContent = "Naam likhna zaroori hai — skip nahi kar sakte."; return; }
+      if(raw.length < 2){ nameError.textContent = "Kam se kam 2 akshar likhein."; return; }
+      studentName = raw.toUpperCase();
+      welcomeName.textContent = studentName;
+      nameModalWrap.style.display = "none";
+      mainPage.classList.remove("hidden");
+      document.body.classList.add("pre-exam");
+      examBtn.disabled = true;
+      updateStartGateUi();
+    }
+
+    nameOkBtn.addEventListener("click", submitName);
+    nameInput.addEventListener("keydown", e=>{ if(e.key==="Enter") submitName(); });
+    // Prevent closing modal by any other means
+    nameModalWrap.addEventListener("click", e=>{ if(e.target===nameModalWrap) nameInput.focus(); });
+
+    /* ── Exam vars ── */
+    const examBtn            = document.getElementById("examBtn");
+    const statusEl           = document.getElementById("status");
+    const timerBox           = document.getElementById("timerBox");
+    const timerEl            = document.getElementById("timer");
+    const startGateLine      = document.getElementById("startGateLine");
+    const frame              = document.getElementById("questionFrame");
+    const examOverlay        = document.getElementById("examOverlay");
+    const openPdfBtn         = document.getElementById("openPdfBtn");
+    const shareBtn           = document.getElementById("shareBtn");
+    const viewResultBtn      = document.getElementById("viewResultBtn");
+    const downloadResultBtn  = document.getElementById("downloadResultBtn");
+    const snapshotView       = document.getElementById("snapshotView");
+    const afterSubmitActions = document.getElementById("afterSubmitActions");
+    const shareModalWrap     = document.getElementById("shareModalWrap");
+    const shareModalOk       = document.getElementById("shareModalOk");
 
     let examRunning=false, submitted=false, startAtMs=0, submitAtMs=0;
     let inactiveStartMs=0, sid="", timerInt=null, gateTimerInt=null, reportUrl="";
 
     const report = {
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone||"Unknown",
-      userAgent: navigator.userAgent,
-      exam:{ durationSeconds:EXAM_SECONDS, startAt:null, submitAt:null, submitReason:null, sessionId:null },
+      timezone  : Intl.DateTimeFormat().resolvedOptions().timeZone||"Unknown",
+      userAgent : navigator.userAgent,
+      studentName: "",
+      exam      : { durationSeconds:EXAM_SECONDS, startAt:null, submitAt:null, submitReason:null, sessionId:null },
       inactiveSessions:[], events:[],
-      result:{ totalQuestions:0,attempted:0,correct:0,wrong:0,unattempted:0,baseScore:0,leaveIncidentCount:0,penaltyMarks:0,finalScore:0,selections:[] },
-      summary:{ totalInactiveMs:0 }
+      result    : { totalQuestions:0,attempted:0,correct:0,wrong:0,unattempted:0,baseScore:0,leaveIncidentCount:0,penaltyMarks:0,finalScore:0,selections:[] },
+      summary   : { totalInactiveMs:0 }
     };
 
-    function setStatus(msg,type){ statusEl.innerHTML=""; const s=document.createElement("span"); s.textContent=msg; if(type) s.className=type; statusEl.appendChild(s); }
+    function setStatus(msg,type){ statusEl.innerHTML=""; const s=document.createElement("span"); s.textContent=msg; if(type)s.className=type; statusEl.appendChild(s); }
     function nowIso(){ return new Date().toISOString(); }
     function mmss(sec){ const s=Math.max(0,Math.floor(sec)); return `${String(Math.floor(s/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`; }
-    function canonicalDate(tsIso){ return new Date(tsIso||Date.now()).toLocaleString(undefined,{weekday:"short",year:"numeric",month:"short",day:"2-digit",hour:"2-digit",minute:"2-digit"}); }
-    function durationText(ms){ const s=Math.max(0,Math.floor(ms/1000)),h=Math.floor(s/3600),m=Math.floor((s%3600)/60),r=s%60,p=[]; if(h)p.push(`${h}h`); if(m)p.push(`${m}min`); p.push(`${r}sec`); return p.join(" "); }
+    function fmtDate(tsIso){ return new Date(tsIso||Date.now()).toLocaleString(undefined,{weekday:"short",year:"numeric",month:"short",day:"2-digit",hour:"2-digit",minute:"2-digit"}); }
+    function fmtDur(ms){ const s=Math.max(0,Math.floor(ms/1000)),h=Math.floor(s/3600),m=Math.floor((s%3600)/60),r=s%60,p=[]; if(h)p.push(`${h}h`); if(m)p.push(`${m}min`); p.push(`${r}sec`); return p.join(" "); }
     function esc(t){ return String(t).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;"); }
-    function renderSnapshot(){ snapshotView.textContent=JSON.stringify({exam:report.exam,result:report.result,summary:report.summary,inactiveSessions:report.inactiveSessions,recentEvents:report.events.slice(-6)},null,2); }
+    function renderSnapshot(){ snapshotView.textContent=JSON.stringify({studentName:report.studentName,exam:report.exam,result:report.result,summary:report.summary,inactiveSessions:report.inactiveSessions,recentEvents:report.events.slice(-6)},null,2); }
     function saveDraft(){ if(!sid)return; localStorage.setItem(STORAGE.reportPrefix+sid,JSON.stringify(report)); }
     function addEvent(type,details={}){ report.events.push({at:nowIso(),type,...details}); saveDraft(); renderSnapshot(); }
     function safeCleanup(){ if(reportUrl)URL.revokeObjectURL(reportUrl); reportUrl=""; localStorage.removeItem(STORAGE.reportLinks); }
@@ -160,8 +260,9 @@
 
     function isStartGateOpen(){
       // ── TIME GATE DISABLED FOR TESTING ──
-      // Button always enabled. To re-enable time-based lock, comment the next line
-      // and uncomment the block below it.
+      // Button hamesha enabled rahega abhi.
+      // Time gate wapas enable karne ke liye neeche wala block uncomment karo
+      // aur upar wali "return true;" line comment karo.
       return true;
 
       /* // ── TIME GATE (uncomment to enable) ──
@@ -178,8 +279,8 @@
       if(examRunning)return;
       if(isStartGateOpen()){ examBtn.disabled=false; startGateLine.textContent=""; if(gateTimerInt)clearInterval(gateTimerInt); gateTimerInt=null; return; }
       examBtn.disabled=true;
-      const remaining=Math.max(0,Math.ceil((todayGateMs()-Date.now())/1000));
-      startGateLine.textContent=`Start locked — opens in ~${Math.floor(remaining/3600)}h ${Math.floor((remaining%3600)/60)}m ${remaining%60}s`;
+      const rem=Math.max(0,Math.ceil((todayGateMs()-Date.now())/1000));
+      startGateLine.textContent=`Start locked — opens in ~${Math.floor(rem/3600)}h ${Math.floor((rem%3600)/60)}m ${rem%60}s`;
       if(!gateTimerInt) gateTimerInt=setInterval(updateStartGateUi,500);
     }
 
@@ -191,72 +292,114 @@
       let data=null; try{data=JSON.parse(raw);}catch{data=null;}
       if(!data||!Array.isArray(data.questions))return;
       const answers=data.answers||{}; let attempted=0,correct=0,wrong=0,unattempted=0; const selections=[];
-      data.questions.forEach(q=>{ const sel=answers[q.id]||null; if(!sel)unattempted++; else{ attempted++; if(sel===q.correctOption)correct++; else wrong++; } selections.push({questionId:q.id,question:q.question,options:q.options,selectedOption:sel,correctOption:q.correctOption,isCorrect:!!sel&&sel===q.correctOption}); });
-      const lc=report.inactiveSessions.length, pm=Math.floor(lc/3), bs=correct;
+      data.questions.forEach(q=>{
+        const sel=answers[q.id]||null;
+        if(!sel) unattempted++;
+        else{ attempted++; if(sel===q.correctOption)correct++; else wrong++; }
+        selections.push({questionId:q.id,question:q.question,options:q.options,selectedOption:sel,correctOption:q.correctOption,isCorrect:!!sel&&sel===q.correctOption});
+      });
+      const lc=report.inactiveSessions.length,pm=Math.floor(lc/3),bs=correct;
       report.result={totalQuestions:data.questions.length,attempted,correct,wrong,unattempted,baseScore:bs,leaveIncidentCount:lc,penaltyMarks:pm,finalScore:bs-pm,selections};
     }
 
     function buildReportData(){
       const iso=submitAtMs?new Date(submitAtMs).toISOString():nowIso();
-      const dateStr=canonicalDate(iso);
       const durMs=submitAtMs&&startAtMs?submitAtMs-startAtMs:0;
-      const awayLines=report.inactiveSessions.map((s,i)=>`${i+1}) Gaye: ${canonicalDate(s.leftAtIso)} | Aaye: ${canonicalDate(s.returnedAtIso)} | Kitni der: ${durationText(s.awayMs)}`);
-      return { dateStr, examSpan:`${canonicalDate(report.exam.startAt)} → ${canonicalDate(report.exam.submitAt)} (${durationText(durMs)})`, awayLines, machineReport:report };
+      const awayLines=report.inactiveSessions.map((s,i)=>
+        `${i+1}. Gaye: ${fmtDate(s.leftAtIso)}  |  Aaye: ${fmtDate(s.returnedAtIso)}  |  Dur: ${fmtDur(s.awayMs)}`
+      );
+      return { name:report.studentName, dateStr:fmtDate(iso), examSpan:`${fmtDate(report.exam.startAt)} → ${fmtDate(report.exam.submitAt)} (${fmtDur(durMs)})`, awayLines, machineReport:report };
     }
 
     function buildReportHtmlBody(d){
       const r=d.machineReport.result;
       const awayHtml=d.awayLines.length
-        ? d.awayLines.map(l=>`<li>${esc(l)}</li>`).join("")
-        : "<li>Kabhi bahar nahi gaye.</li>";
-
+        ? `<ul>${d.awayLines.map(l=>`<li>${esc(l)}</li>`).join("")}</ul>`
+        : `<p class="none-text">Kabhi bahar nahi gaye ✓</p>`;
       const qHtml=r.selections.map((s,i)=>{
         const badge=!s.selectedOption
-          ? `<span style="background:#1e293b;color:#94a3b8;font-size:11px;padding:1px 8px;border-radius:10px;margin-left:6px">Skip</span>`
-          : s.isCorrect
-            ? `<span style="background:#14532d;color:#86efac;font-size:11px;padding:1px 8px;border-radius:10px;margin-left:6px">&#10003; Sahi</span>`
-            : `<span style="background:#4c0519;color:#fda4af;font-size:11px;padding:1px 8px;border-radius:10px;margin-left:6px">&#10007; Galat</span>`;
-
-        const optHtml=s.options?Object.entries(s.options).map(([k,v])=>{
-          let style="color:#94a3b8", note="";
-          if(k===s.correctOption&&k===s.selectedOption){ style="color:#86efac;font-weight:700"; note=" &#10003; (aapka jawab — sahi)"; }
-          else if(k===s.correctOption){ style="color:#86efac;font-weight:700"; note=" &#10003; (sahi jawab)"; }
-          else if(k===s.selectedOption){ style="color:#fda4af;font-weight:700"; note=" &#10007; (aapka jawab)"; }
-          return `<div style="display:flex;gap:6px;padding:2px 0"><span style="min-width:20px;${style}">${esc(k)}.</span><span style="${style}">${esc(v)}${note}</span></div>`;
+          ? `<span class="badge skip">Skip</span>`
+          : s.isCorrect ? `<span class="badge ok">✓ Sahi</span>` : `<span class="badge bad">✗ Galat</span>`;
+        const optRows=s.options?Object.entries(s.options).map(([k,v])=>{
+          let cls="opt-neutral",note="";
+          if(k===s.correctOption&&k===s.selectedOption){ cls="opt-ok"; note=` <span class="tag tag-ok">✓ Aapka jawab — Sahi</span>`; }
+          else if(k===s.correctOption){ cls="opt-ok"; note=` <span class="tag tag-ok">✓ Sahi jawab</span>`; }
+          else if(k===s.selectedOption){ cls="opt-bad"; note=` <span class="tag tag-bad">✗ Aapka jawab</span>`; }
+          return `<div class="opt-row ${cls}"><span class="opt-key">${esc(k)}.</span><span>${esc(v)}${note}</span></div>`;
         }).join(""):"";
-
-        return `<li style="background:#0d1f38;border:1px solid #1e3a5f;border-radius:8px;padding:10px 12px;margin-bottom:8px;font-size:13px;line-height:1.7;list-style:none">
-          <div style="font-weight:700;color:#e2e8f0;margin-bottom:6px">Q${i+1}. ${esc(s.question)} ${badge}</div>
-          ${optHtml}
-        </li>`;
+        return `<div class="q-card"><div class="q-title">Q${i+1}. ${esc(s.question)} ${badge}</div><div class="opts">${optRows}</div></div>`;
       }).join("");
 
       return `
-        <div style="margin-bottom:16px">
-          <h3 style="margin:0 0 8px;font-size:15px;color:#93c5fd;border-bottom:1px solid #1e3a5f;padding-bottom:4px">Exam Summary</h3>
-          <div style="background:#0d1f38;border-radius:8px;padding:10px 12px;font-size:14px;line-height:2">
-            <div><span style="color:#94a3b8">Date: </span>${esc(d.dateStr)}</div>
-            <div><span style="color:#94a3b8">Duration: </span>${esc(d.examSpan)}</div>
-            <div><span style="color:#94a3b8">Total: </span>${r.totalQuestions} &nbsp;|&nbsp; <span style="color:#94a3b8">Attempt: </span>${r.attempted} &nbsp;|&nbsp; <span style="color:#94a3b8">Skip: </span>${r.unattempted}</div>
-            <div><span style="color:#94a3b8">Sahi: </span><b style="color:#86efac">${r.correct}</b> &nbsp;|&nbsp; <span style="color:#94a3b8">Galat: </span><b style="color:#fda4af">${r.wrong}</b></div>
-            <div><span style="color:#94a3b8">Base Score: </span>${r.baseScore} &nbsp;|&nbsp; <span style="color:#94a3b8">Penalty: </span>&#8722;${r.penaltyMarks} &nbsp;|&nbsp; <span style="color:#94a3b8">Final: </span><b style="color:#fbbf24">${r.finalScore}</b></div>
+        <div class="name-header">HI, <span class="name-grad">${esc(d.name)}</span> — Exam Report</div>
+        <div class="section">
+          <div class="sec-head">📊 Exam Summary</div>
+          <div class="summary-grid">
+            <div class="sg-row"><span class="sg-label">Student Name</span><span class="c-grad">${esc(d.name)}</span></div>
+            <div class="sg-row"><span class="sg-label">Date</span><span>${esc(d.dateStr)}</span></div>
+            <div class="sg-row"><span class="sg-label">Duration</span><span>${esc(d.examSpan)}</span></div>
+            <div class="sg-row"><span class="sg-label">Total Questions</span><span>${r.totalQuestions}</span></div>
+            <div class="sg-row"><span class="sg-label">Attempted</span><span>${r.attempted}</span></div>
+            <div class="sg-row"><span class="sg-label">Skipped</span><span>${r.unattempted}</span></div>
+            <div class="sg-row"><span class="sg-label">Sahi ✓</span><span class="c-ok">${r.correct}</span></div>
+            <div class="sg-row"><span class="sg-label">Galat ✗</span><span class="c-bad">${r.wrong}</span></div>
+            <div class="sg-row"><span class="sg-label">Base Score</span><span>${r.baseScore}</span></div>
+            <div class="sg-row"><span class="sg-label">Penalty</span><span class="c-bad">−${r.penaltyMarks}</span></div>
+            <div class="sg-row final-row"><span class="sg-label">Final Score</span><span class="c-gold">${r.finalScore}</span></div>
           </div>
-          <p style="font-size:11px;color:#64748b;margin:4px 0 0">Penalty: har 3 baar bahar jane par &minus;1 mark</p>
+          <div class="note-text">Penalty: har 3 baar bahar jane par −1 mark</div>
         </div>
-        <div style="margin-bottom:16px">
-          <h3 style="margin:0 0 8px;font-size:15px;color:#93c5fd;border-bottom:1px solid #1e3a5f;padding-bottom:4px">Bahar Jane Ka Record</h3>
-          <ul style="padding:0;margin:0">${awayHtml}</ul>
+        <div class="section">
+          <div class="sec-head">🚪 Bahar Jane Ka Record</div>
+          ${awayHtml}
         </div>
-        <div>
-          <h3 style="margin:0 0 8px;font-size:15px;color:#93c5fd;border-bottom:1px solid #1e3a5f;padding-bottom:4px">Questions &amp; Answers</h3>
-          <ul style="padding:0;margin:0">${qHtml}</ul>
+        <div class="section">
+          <div class="sec-head">📝 Questions &amp; Answers</div>
+          ${qHtml}
         </div>`;
     }
 
     function buildFullPage(d){
-      return `<!doctype html><html><head><meta charset="UTF-8"><title>Exam Report</title>
-<style>body{font-family:Arial,sans-serif;margin:0;padding:20px;background:#0b1220;color:#e2e8f0}li{color:#cbd5e1}</style>
-</head><body>${buildReportHtmlBody(d)}</body></html>`;
+      return `<!doctype html><html><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Exam Report — ${esc(d.name)}</title>
+<style>
+*{box-sizing:border-box}
+body{font-family:Arial,sans-serif;margin:0;padding:16px;background:#0b1220;color:#e2e8f0;font-size:15px;line-height:1.65}
+.name-header{font-size:clamp(18px,5vw,26px);font-weight:700;text-align:center;padding:14px 0 18px;letter-spacing:1px}
+.name-grad{background:linear-gradient(90deg,#34d399,#22d3ee,#a78bfa,#fb7185);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.c-grad{background:linear-gradient(90deg,#34d399,#22d3ee);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-weight:700}
+.section{margin-bottom:22px}
+.sec-head{font-size:16px;font-weight:700;color:#93c5fd;border-bottom:1px solid #1e3a5f;padding-bottom:6px;margin-bottom:10px}
+.summary-grid{background:#0d1f38;border-radius:10px;padding:12px 14px}
+.sg-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #162035;font-size:14px}
+.sg-row:last-child{border-bottom:none}
+.sg-label{color:#94a3b8}
+.final-row{font-weight:700;font-size:15px;padding-top:8px}
+.c-ok{color:#86efac;font-weight:700}
+.c-bad{color:#fda4af;font-weight:700}
+.c-gold{color:#fbbf24;font-weight:700}
+.note-text{font-size:12px;color:#64748b;margin-top:6px}
+.none-text{color:#86efac;font-size:14px;margin:4px 0}
+ul{list-style:none;padding:0;margin:0}
+li{padding:6px 0;border-bottom:1px solid #1a2d47;font-size:14px;color:#cbd5e1}
+li:last-child{border-bottom:none}
+.q-card{background:#0d1f38;border:1px solid #1e3a5f;border-radius:10px;padding:12px 14px;margin-bottom:10px}
+.q-title{font-weight:700;color:#e2e8f0;margin-bottom:8px;font-size:15px;line-height:1.5}
+.badge{display:inline-block;font-size:12px;padding:2px 9px;border-radius:10px;margin-left:8px;vertical-align:middle}
+.ok{background:#14532d;color:#86efac}
+.bad{background:#4c0519;color:#fda4af}
+.skip{background:#1e293b;color:#94a3b8}
+.opts{display:flex;flex-direction:column;gap:3px}
+.opt-row{display:flex;gap:8px;align-items:flex-start;padding:5px 8px;border-radius:7px;font-size:14px}
+.opt-ok{background:#0f2e1a;color:#86efac}
+.opt-bad{background:#2d0e16;color:#fda4af}
+.opt-neutral{color:#94a3b8}
+.opt-key{font-weight:700;min-width:22px;flex-shrink:0}
+.tag{font-size:11px;padding:1px 7px;border-radius:8px;white-space:nowrap;margin-left:4px}
+.tag-ok{background:#14532d;color:#86efac}
+.tag-bad{background:#4c0519;color:#fda4af}
+</style></head><body>${buildReportHtmlBody(d)}</body></html>`;
     }
 
     function buildPlainText(d){
@@ -265,15 +408,15 @@
       const qtext=r.selections.map((s,i)=>{
         const opts=s.options?Object.entries(s.options).map(([k,v])=>{
           let note="";
-          if(k===s.correctOption&&k===s.selectedOption)note=" <-- aapka jawab (SAHI)";
-          else if(k===s.correctOption)note=" <-- sahi jawab";
-          else if(k===s.selectedOption)note=" <-- aapka jawab (GALAT)";
+          if(k===s.correctOption&&k===s.selectedOption) note=" <-- aapka jawab (SAHI)";
+          else if(k===s.correctOption) note=" <-- sahi jawab";
+          else if(k===s.selectedOption) note=" <-- aapka jawab (GALAT)";
           return `  ${k}. ${v}${note}`;
         }).join("\n"):"";
         const st=!s.selectedOption?"Skip":s.isCorrect?"Sahi":"Galat";
         return `Q${i+1}. ${s.question} [${st}]\n${opts}`;
       }).join("\n\n");
-      return `EXAM REPORT\n${"=".repeat(40)}\nDate: ${d.dateStr}\nDuration: ${d.examSpan}\n\nSCORE\nTotal: ${r.totalQuestions} | Attempt: ${r.attempted} | Skip: ${r.unattempted}\nSahi: ${r.correct} | Galat: ${r.wrong}\nBase: ${r.baseScore} | Penalty: -${r.penaltyMarks} | Final: ${r.finalScore}\n\nBAHAR JANE KA RECORD\n${away}\n\nQUESTIONS\n${"=".repeat(40)}\n${qtext}`;
+      return `EXAM REPORT — ${d.name}\n${"=".repeat(50)}\nStudent: ${d.name}\nDate: ${d.dateStr}\nDuration: ${d.examSpan}\n\nSCORE\nTotal: ${r.totalQuestions} | Attempt: ${r.attempted} | Skip: ${r.unattempted}\nSahi: ${r.correct} | Galat: ${r.wrong}\nBase: ${r.baseScore} | Penalty: -${r.penaltyMarks} | Final: ${r.finalScore}\n\nBAHAR JANE KA RECORD\n${away}\n\nQUESTIONS\n${"=".repeat(50)}\n${qtext}`;
     }
 
     function download(name,content,type){ const url=URL.createObjectURL(new Blob([content],{type})); const a=document.createElement("a"); a.href=url; a.download=name; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); }
@@ -286,6 +429,7 @@
       if(!isStartGateOpen()){setStatus("Abhi Start time gate band hai.","warn");return;}
       if(examRunning)return;
       clearOld(); submitted=false;
+      report.studentName=studentName;
       report.inactiveSessions=[]; report.events=[]; report.summary={totalInactiveMs:0};
       report.result={totalQuestions:0,attempted:0,correct:0,wrong:0,unattempted:0,baseScore:0,leaveIncidentCount:0,penaltyMarks:0,finalScore:0,selections:[]};
       report.exam={durationSeconds:EXAM_SECONDS,startAt:null,submitAt:null,submitReason:null,sessionId:null};
@@ -319,16 +463,16 @@
 
     openPdfBtn.addEventListener("click",()=>{
       if(!submitted)return;
-      const d=buildReportData(), html=buildFullPage(d);
+      const d=buildReportData(),html=buildFullPage(d);
       if(reportUrl)URL.revokeObjectURL(reportUrl);
       reportUrl=URL.createObjectURL(new Blob([html],{type:"text/html"}));
       window.open(reportUrl,"_blank");
     });
     shareBtn.addEventListener("click",async()=>{
       if(!submitted)return;
-      const d=buildReportData(), txt=buildPlainText(d);
-      const fname=`exam-report-${Date.now()}.txt`;
-      const blob=new Blob([txt],{type:"text/plain;charset=utf-8"}), file=new File([blob],fname,{type:"text/plain"});
+      const d=buildReportData(),txt=buildPlainText(d);
+      const fname=`exam-report-${d.name}-${Date.now()}.txt`;
+      const blob=new Blob([txt],{type:"text/plain;charset=utf-8"}),file=new File([blob],fname,{type:"text/plain"});
       try{
         if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({title:"Exam report",text:txt.slice(0,2000),files:[file]});setStatus("Share ok.","ok");}
         else if(navigator.share){await navigator.share({title:"Exam report",text:txt});setStatus("Share ok.","ok");}
@@ -338,21 +482,21 @@
     });
     viewResultBtn.addEventListener("click",()=>{
       if(!submitted)return;
-      const d=buildReportData(), html=buildFullPage(d);
+      const d=buildReportData(),html=buildFullPage(d);
       const u=URL.createObjectURL(new Blob([html],{type:"text/html"}));
       window.open(u,"_blank"); setTimeout(()=>URL.revokeObjectURL(u),120000);
     });
     downloadResultBtn.addEventListener("click",()=>{
       if(!submitted)return;
-      const d=buildReportData(); download(`exam-result-${Date.now()}.html`,buildFullPage(d),"text/html;charset=utf-8");
+      const d=buildReportData(); download(`exam-result-${d.name}-${Date.now()}.html`,buildFullPage(d),"text/html;charset=utf-8");
     });
 
     document.addEventListener("visibilitychange",()=>{ if(!examRunning||submitted)return; if(document.visibilityState==="hidden")markInactiveStart("visibility_hidden_background"); if(document.visibilityState==="visible")markInactiveEnd("visibility_visible_foreground"); });
     window.addEventListener("pagehide",()=>{ if(examRunning&&!submitted)markInactiveStart("pagehide_navigation"); });
     window.addEventListener("pageshow",e=>{ if(examRunning&&!submitted&&!e.persisted)markInactiveEnd("pageshow_back"); });
 
-    addEvent("page_loaded"); renderSnapshot(); examBtn.disabled=true; updateStartGateUi();
-    if(window.location.hostname==="github.com")setStatus("GitHub Pages (github.io) use karo.","warn");
+    addEvent("page_loaded"); renderSnapshot();
+    // examBtn init hoga tab jab mainPage dikhega
   </script>
 </body>
 </html>
