@@ -9,64 +9,89 @@
     *{ box-sizing:border-box; }
     html,body{ margin:0; height:100%; overflow:hidden; font-family:Arial,sans-serif; background:var(--bg); color:var(--text); }
 
-    /* Full height shell — NO scroll anywhere */
+    /* Shell — flex column, no scroll */
     .shell{ height:100vh; display:flex; flex-direction:column; overflow:hidden; }
 
-    /* Question area — takes remaining space, no scroll */
+    /* Question area — scrolls internally if text overflows */
     .q-area{
-      flex:1 1 auto; min-height:0; overflow:hidden;
-      padding:8px 10px 4px;
+      flex:1 1 auto; min-height:0;
+      overflow-y:auto; -webkit-overflow-scrolling:touch;
+      padding:12px 14px 8px;
     }
-    .meta{ color:var(--muted); font-size:11px; margin-bottom:4px; }
-    .q-text{ font-size:clamp(14px,3.8vw,19px); margin:0 0 6px; line-height:1.4; }
-    .opts{ overflow:hidden; }
+    .meta{ color:var(--muted); font-size:clamp(12px,3vw,14px); margin-bottom:6px; }
+    .q-text{
+      font-size:clamp(17px,4.5vw,22px);
+      margin:0 0 10px; line-height:1.45; font-weight:600;
+    }
     .opt{
-      border:1px solid var(--line); border-radius:7px; padding:7px 9px;
-      margin-bottom:6px; display:flex; gap:7px; align-items:center; cursor:pointer;
-      font-size:clamp(12px,3.2vw,14px);
+      border:1px solid var(--line); border-radius:10px;
+      padding:12px 14px; margin-bottom:9px;
+      display:flex; gap:10px; align-items:center; cursor:pointer;
+      font-size:clamp(14px,3.8vw,17px); line-height:1.4;
+      transition:border-color .15s;
     }
     .opt:hover{ border-color:var(--acc); }
-    .opt input[type=radio]{ accent-color:var(--acc); flex-shrink:0; }
+    .opt input[type=radio]{ accent-color:var(--acc); flex-shrink:0; width:18px; height:18px; }
     .logic-body{
-      border:1px solid #33507e; border-radius:8px; padding:10px;
-      background:#0b162b; color:#dbeafe; line-height:1.55;
-      font-size:clamp(13px,3.4vw,15px);
+      border:1px solid #33507e; border-radius:10px; padding:14px;
+      background:#0b162b; color:#dbeafe; line-height:1.6;
+      font-size:clamp(14px,3.8vw,17px);
     }
 
-    /* Controls — fixed at bottom, never scrolls */
+    /* Controls — normal flow at bottom.
+       NOT fixed — on split screen small windows they get cut off naturally (intentional). */
     .ctrl{
-      flex-shrink:0; background:#020617;
-      border-top:1px solid #1e2d45; padding:5px 8px 4px;
+      background:#020617;
+      border-top:1px solid #1e2d45;
+      padding:8px 12px 10px;
     }
-    .pal-label{ font-size:10px; color:var(--muted); margin-bottom:2px; }
-    .palette{ display:flex; gap:4px; flex-wrap:wrap; margin-bottom:4px; }
+    .pal-label{
+      font-size:clamp(11px,2.8vw,13px); color:var(--muted); margin-bottom:4px; font-weight:600;
+    }
+    .palette{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom:6px; }
     .pill{
-      width:28px; height:28px; border-radius:50%; border:1px solid var(--line);
+      width:clamp(32px,8vw,40px); height:clamp(32px,8vw,40px);
+      border-radius:50%; border:1px solid var(--line);
       background:#1e293b; color:#cbd5e1; cursor:pointer; font-weight:700;
-      font-size:11px; display:flex; align-items:center; justify-content:center; padding:0;
+      font-size:clamp(12px,3.2vw,15px);
+      display:flex; align-items:center; justify-content:center; padding:0;
     }
-    .pill.am{ outline:2px solid var(--acc); }
-    .pill.al{ outline:2px solid var(--acc2); }
-    .pill.answered{ background:#14532d; border-color:#22c55e; }
-    .nav-row{ display:flex; gap:5px; align-items:center; justify-content:center; margin-bottom:3px; }
-    .nlabel{ font-size:10px; color:var(--muted); min-width:40px; text-align:center; }
-    button{ border:0; border-radius:6px; cursor:pointer; padding:6px 11px; font-weight:700; font-size:12px; background:#334155; color:#f1f5f9; }
+    .pill.am{ outline:2px solid var(--acc); outline-offset:1px; }
+    .pill.al{ outline:2px solid var(--acc2); outline-offset:1px; }
+    .pill.answered{ background:#14532d; border-color:#22c55e; color:#86efac; }
+    .nav-row{
+      display:flex; gap:7px; align-items:center;
+      justify-content:center; margin-bottom:5px;
+    }
+    .nlabel{ font-size:clamp(11px,3vw,13px); color:var(--muted); min-width:44px; text-align:center; }
+    button{
+      border:0; border-radius:9px; cursor:pointer;
+      padding:clamp(8px,2.5vw,11px) clamp(12px,3.5vw,18px);
+      font-weight:700; font-size:clamp(13px,3.5vw,16px);
+      background:#334155; color:#f1f5f9;
+    }
     button:disabled{ opacity:0.35; cursor:not-allowed; }
-    .sbtn{ background:#16a34a; color:#f0fdf4; }
-    .hint{ color:#86efac; font-size:10px; min-height:12px; text-align:center; }
-    .divider{ border:none; border-top:1px solid #1e2d45; margin:3px 0; }
+    .sbtn{
+      background:linear-gradient(135deg,#16a34a,#15803d,#059669);
+      color:#fff;
+      box-shadow:0 3px 12px rgba(22,163,74,.35);
+      padding:clamp(8px,2.5vw,11px) clamp(16px,4vw,24px);
+    }
+    .sbtn:active{ opacity:.85; }
+    .divider{ border:none; border-top:1px solid #1e2d45; margin:5px 0; }
+    .hint{ color:#86efac; font-size:clamp(10px,2.5vw,12px); min-height:14px; text-align:center; margin-top:2px; }
   </style>
 </head>
 <body>
 <div class="shell">
-  <!-- Question display -->
+  <!-- Scrollable question -->
   <div class="q-area">
     <div class="meta" id="metaText"></div>
     <div class="q-text" id="qText"></div>
-    <div class="opts" id="optsBox"></div>
+    <div id="optsBox"></div>
   </div>
 
-  <!-- Fixed controls -->
+  <!-- Controls — natural flow, cut off on very small/split screens intentionally -->
   <div class="ctrl">
     <div class="pal-label">MCQ Questions</div>
     <div class="palette" id="mcqPal"></div>
@@ -82,15 +107,15 @@
       <button id="lp">&#8592; Back</button>
       <span class="nlabel" id="lLabel">—</span>
       <button id="ln">Next &#8594;</button>
-      <button class="sbtn" id="subBtn">Submit</button>
+      <button class="sbtn" id="subBtn">Submit Exam</button>
     </div>
     <div class="hint" id="hint"></div>
   </div>
 </div>
 
 <script>
-  const SESSION_KEY      = "exam_active_session";
-  const ANSWER_KEY_PFX   = "exam_answers_";
+  const SESSION_KEY    = "exam_active_session";
+  const ANSWER_KEY_PFX = "exam_answers_";
 
   // ── QUESTIONS ──
   // kind: "mcq" = MCQ only | "logic" = reading/objective only
@@ -120,27 +145,21 @@
     }
   ];
 
-  const mcqItems   = items.filter(it=>it.kind==="mcq");
-  const logicItems = items.filter(it=>it.kind==="logic");
-  const mcqQuestions = mcqItems.map(it=>({ id:it.id, question:it.mcqTitle, options:it.options, correctOption:it.correctOption }));
+  const mcqItems    = items.filter(it=>it.kind==="mcq");
+  const logicItems  = items.filter(it=>it.kind==="logic");
+  const mcqQuestions= mcqItems.map(it=>({id:it.id,question:it.mcqTitle,options:it.options,correctOption:it.correctOption}));
 
-  const params    = new URLSearchParams(window.location.search);
-  let sessionId   = params.get("session") || localStorage.getItem(SESSION_KEY) || "";
-  if(!sessionId) sessionId = `fallback_${Date.now()}`;
-  localStorage.setItem(SESSION_KEY, sessionId);
-  const storageKey = ANSWER_KEY_PFX + sessionId;
+  const params   = new URLSearchParams(window.location.search);
+  let sessionId  = params.get("session")||localStorage.getItem(SESSION_KEY)||"";
+  if(!sessionId) sessionId=`fallback_${Date.now()}`;
+  localStorage.setItem(SESSION_KEY,sessionId);
+  const storageKey=ANSWER_KEY_PFX+sessionId;
 
   let mcqIdx=0, logIdx=0, activeSection="mcq";
-  let state = { sessionId, mcqQuestions, answers:{} };
+  let state={ sessionId, mcqQuestions, answers:{} };
 
-  function loadState(){
-    const raw=localStorage.getItem(storageKey); if(!raw)return;
-    try{ const p=JSON.parse(raw); if(p&&p.answers) state.answers=p.answers||{}; }catch{}
-  }
-  function persist(){
-    localStorage.setItem(storageKey, JSON.stringify({ sessionId:state.sessionId, questions:state.mcqQuestions, answers:state.answers, updatedAt:new Date().toISOString() }));
-    document.getElementById("hint").textContent=`Saved ${new Date().toLocaleTimeString()}`;
-  }
+  function loadState(){ const raw=localStorage.getItem(storageKey); if(!raw)return; try{ const p=JSON.parse(raw); if(p&&p.answers)state.answers=p.answers||{}; }catch{} }
+  function persist(){ localStorage.setItem(storageKey,JSON.stringify({sessionId:state.sessionId,questions:state.mcqQuestions,answers:state.answers,updatedAt:new Date().toISOString()})); document.getElementById("hint").textContent=`Saved ${new Date().toLocaleTimeString()}`; }
   function esc(t){ return String(t).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;"); }
 
   function renderQ(){
@@ -187,10 +206,10 @@
       b.addEventListener("click",()=>{ logIdx=i; activeSection="logic"; render(); });
       pal.appendChild(b);
     });
-    const hasLog=logicItems.length>0;
-    document.getElementById("lLabel").textContent=hasLog?`${logIdx+1}/${logicItems.length}`:"—";
-    document.getElementById("lp").disabled=!hasLog||logIdx===0;
-    document.getElementById("ln").disabled=!hasLog||logIdx===logicItems.length-1;
+    const has=logicItems.length>0;
+    document.getElementById("lLabel").textContent=has?`${logIdx+1}/${logicItems.length}`:"—";
+    document.getElementById("lp").disabled=!has||logIdx===0;
+    document.getElementById("ln").disabled=!has||logIdx===logicItems.length-1;
   }
 
   function render(){ renderQ(); renderMcqPal(); renderLogPal(); }
