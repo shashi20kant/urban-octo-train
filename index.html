@@ -92,7 +92,7 @@
       overflow:auto;line-height:1.5;color:#dbeafe;font-family:Consolas,"Courier New",monospace;
       font-size:clamp(11px,2.8vw,13px);white-space:pre-wrap;word-break:break-word;
     }
-    #examOverlay{display:none;position:fixed;inset:0;z-index:5000;background:#040914;flex-direction:column;}
+    #examOverlay{display:none;position:fixed;inset:0;z-index:5000;background:#040914;flex-direction:column;padding-top:74px;}
     #examOverlay.active{display:flex}
     #examFrameWrap{flex:1 1 auto;min-height:0;overflow:hidden;}
     #questionFrame{width:100%;height:100%;border:none;display:block;background:#040914;}
@@ -245,6 +245,7 @@
     function nowIso(){ return new Date().toISOString(); }
     function mmss(sec){ const s=Math.max(0,Math.floor(sec)); return `${String(Math.floor(s/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`; }
     function fmtDate(tsIso){ return new Date(tsIso||Date.now()).toLocaleString(undefined,{weekday:"short",year:"numeric",month:"short",day:"2-digit",hour:"2-digit",minute:"2-digit"}); }
+    function fmtTime(tsIso){ return new Date(tsIso||Date.now()).toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit",second:"2-digit"}); }
     function fmtDur(ms){ const s=Math.max(0,Math.floor(ms/1000)),h=Math.floor(s/3600),m=Math.floor((s%3600)/60),r=s%60,p=[]; if(h)p.push(`${h}h`); if(m)p.push(`${m}min`); p.push(`${r}sec`); return p.join(" "); }
     function esc(t){ return String(t).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;"); }
     function renderSnapshot(){ snapshotView.textContent=JSON.stringify({studentName:report.studentName,exam:report.exam,result:report.result,summary:report.summary,inactiveSessions:report.inactiveSessions,recentEvents:report.events.slice(-6)},null,2); }
@@ -306,16 +307,21 @@
       const iso=submitAtMs?new Date(submitAtMs).toISOString():nowIso();
       const durMs=submitAtMs&&startAtMs?submitAtMs-startAtMs:0;
       const awayLines=report.inactiveSessions.map((s,i)=>
-        `${i+1}. Gaye: ${fmtDate(s.leftAtIso)}  |  Aaye: ${fmtDate(s.returnedAtIso)}  |  Dur: ${fmtDur(s.awayMs)}`
+        `${i+1}. Gaye: ${fmtTime(s.leftAtIso)}  |  Aaye: ${fmtTime(s.returnedAtIso)}  |  Dur: ${fmtDur(s.awayMs)}`
       );
       return { name:report.studentName, dateStr:fmtDate(iso), examSpan:`${fmtDate(report.exam.startAt)} → ${fmtDate(report.exam.submitAt)} (${fmtDur(durMs)})`, awayLines, machineReport:report };
     }
 
-    function buildReportHtmlBody(d){
+    function buildReportHtmlBody(d,{includeAwayRecord=true}={}){
       const r=d.machineReport.result;
       const awayHtml=d.awayLines.length
         ? `<ul>${d.awayLines.map(l=>`<li>${esc(l)}</li>`).join("")}</ul>`
         : `<p class="none-text">Kabhi bahar nahi gaye ✓</p>`;
+      const awaySection=includeAwayRecord?`
+        <div class="section">
+          <div class="sec-head">Bahar Jane Ka Record</div>
+          ${awayHtml}
+        </div>`:"";
       const qHtml=r.selections.map((s,i)=>{
         const badge=!s.selectedOption
           ? `<span class="badge skip">Skip</span>`
@@ -349,17 +355,14 @@
           </div>
           <div class="note-text">Penalty: har 3 baar bahar jane par −1 mark</div>
         </div>
-        <div class="section">
-          <div class="sec-head">🚪 Bahar Jane Ka Record</div>
-          ${awayHtml}
-        </div>
+        ${awaySection}
         <div class="section">
           <div class="sec-head">📝 Questions &amp; Answers</div>
           ${qHtml}
         </div>`;
     }
 
-    function buildFullPage(d){
+    function buildFullPage(d,opts={}){
       return `<!doctype html><html><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Exam Report — ${esc(d.name)}</title>
@@ -399,10 +402,10 @@ li:last-child{border-bottom:none}
 .tag{font-size:11px;padding:1px 7px;border-radius:8px;white-space:nowrap;margin-left:4px}
 .tag-ok{background:#14532d;color:#86efac}
 .tag-bad{background:#4c0519;color:#fda4af}
-</style></head><body>${buildReportHtmlBody(d)}</body></html>`;
+</style></head><body>${buildReportHtmlBody(d,opts)}</body></html>`;
     }
 
-    function buildPlainText(d){
+    function buildPlainText(d,{includeAwayRecord=true}={}){
       const r=d.machineReport.result;
       const away=d.awayLines.length?d.awayLines.join("\n"):"Kabhi bahar nahi gaye.";
       const qtext=r.selections.map((s,i)=>{
@@ -416,7 +419,8 @@ li:last-child{border-bottom:none}
         const st=!s.selectedOption?"Skip":s.isCorrect?"Sahi":"Galat";
         return `Q${i+1}. ${s.question} [${st}]\n${opts}`;
       }).join("\n\n");
-      return `EXAM REPORT — ${d.name}\n${"=".repeat(50)}\nStudent: ${d.name}\nDate: ${d.dateStr}\nDuration: ${d.examSpan}\n\nSCORE\nTotal: ${r.totalQuestions} | Attempt: ${r.attempted} | Skip: ${r.unattempted}\nSahi: ${r.correct} | Galat: ${r.wrong}\nBase: ${r.baseScore} | Penalty: -${r.penaltyMarks} | Final: ${r.finalScore}\n\nBAHAR JANE KA RECORD\n${away}\n\nQUESTIONS\n${"=".repeat(50)}\n${qtext}`;
+      const awayBlock=includeAwayRecord?`\n\nBAHAR JANE KA RECORD\n${away}`:"";
+      return `EXAM REPORT — ${d.name}\n${"=".repeat(50)}\nStudent: ${d.name}\nDate: ${d.dateStr}\nDuration: ${d.examSpan}\n\nSCORE\nTotal: ${r.totalQuestions} | Attempt: ${r.attempted} | Skip: ${r.unattempted}\nSahi: ${r.correct} | Galat: ${r.wrong}\nBase: ${r.baseScore} | Penalty: -${r.penaltyMarks} | Final: ${r.finalScore}${awayBlock}\n\nQUESTIONS\n${"=".repeat(50)}\n${qtext}`;
     }
 
     function download(name,content,type){ const url=URL.createObjectURL(new Blob([content],{type})); const a=document.createElement("a"); a.href=url; a.download=name; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); }
@@ -470,9 +474,9 @@ li:last-child{border-bottom:none}
     });
     shareBtn.addEventListener("click",async()=>{
       if(!submitted)return;
-      const d=buildReportData(),txt=buildPlainText(d);
-      const fname=`exam-report-${d.name}-${Date.now()}.txt`;
-      const blob=new Blob([txt],{type:"text/plain;charset=utf-8"}),file=new File([blob],fname,{type:"text/plain"});
+      const d=buildReportData(),html=buildFullPage(d,{includeAwayRecord:true}),txt=buildPlainText(d,{includeAwayRecord:true});
+      const fname=`exam-report-${d.name}-${Date.now()}.html`;
+      const blob=new Blob([html],{type:"text/html;charset=utf-8"}),file=new File([blob],fname,{type:"text/html"});
       try{
         if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({title:"Exam report",text:txt.slice(0,2000),files:[file]});setStatus("Share ok.","ok");}
         else if(navigator.share){await navigator.share({title:"Exam report",text:txt});setStatus("Share ok.","ok");}
@@ -482,13 +486,13 @@ li:last-child{border-bottom:none}
     });
     viewResultBtn.addEventListener("click",()=>{
       if(!submitted)return;
-      const d=buildReportData(),html=buildFullPage(d);
+      const d=buildReportData(),html=buildFullPage(d,{includeAwayRecord:false});
       const u=URL.createObjectURL(new Blob([html],{type:"text/html"}));
       window.open(u,"_blank"); setTimeout(()=>URL.revokeObjectURL(u),120000);
     });
     downloadResultBtn.addEventListener("click",()=>{
       if(!submitted)return;
-      const d=buildReportData(); download(`exam-result-${d.name}-${Date.now()}.html`,buildFullPage(d),"text/html;charset=utf-8");
+      const d=buildReportData(); download(`exam-result-${d.name}-${Date.now()}.html`,buildFullPage(d,{includeAwayRecord:false}),"text/html;charset=utf-8");
     });
 
     document.addEventListener("visibilitychange",()=>{ if(!examRunning||submitted)return; if(document.visibilityState==="hidden")markInactiveStart("visibility_hidden_background"); if(document.visibilityState==="visible")markInactiveEnd("visibility_visible_foreground"); });
