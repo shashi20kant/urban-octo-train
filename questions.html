@@ -7,15 +7,24 @@
   <style>
     :root{ --bg:#020617;--line:#334155;--text:#e2e8f0;--muted:#94a3b8;--acc:#22d3ee;--acc2:#a78bfa; }
     *{ box-sizing:border-box; }
-    html,body{ margin:0; height:100%; overflow:hidden; font-family:Arial,sans-serif; background:var(--bg); color:var(--text); }
+    html,body{
+      margin:0; width:100%; height:100%;
+      overflow:hidden; overscroll-behavior:none;
+      font-family:Arial,sans-serif; background:var(--bg); color:var(--text);
+    }
 
     /* Shell — flex column, no scroll */
-    .shell{ height:100vh; display:flex; flex-direction:column; overflow:hidden; }
+    .shell{
+      height:max(100svh, 680px);
+      min-height:680px;
+      display:flex; flex-direction:column;
+      overflow:hidden;
+    }
 
     /* Question area — scrolls internally if text overflows */
     .q-area{
       flex:1 1 auto; min-height:0;
-      overflow-y:auto; -webkit-overflow-scrolling:touch;
+      overflow:hidden;
       padding:12px 14px 8px;
     }
     .meta{ color:var(--muted); font-size:clamp(12px,3vw,14px); margin-bottom:6px; }
@@ -44,6 +53,12 @@
       background:#020617;
       border-top:1px solid #1e2d45;
       padding:8px 12px 10px;
+    }
+    @media (max-width: 760px){
+      .shell{
+        height:max(calc(100svh + 280px), 900px);
+        min-height:900px;
+      }
     }
     .pal-label{
       font-size:clamp(11px,2.8vw,13px); color:var(--muted); margin-bottom:4px; font-weight:600;
