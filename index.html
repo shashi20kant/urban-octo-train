@@ -182,6 +182,8 @@
       active:"exam_active_session", answersPrefix:"exam_answers_",
       reportPrefix:"exam_report_", reportLinks:"exam_temp_links"
     };
+    const MIN_EXAM_WIDTH = 320;
+    const MIN_EXAM_HEIGHT = 430;
 
     /* ── Name gate ── */
     let studentName = "";
@@ -230,6 +232,7 @@
 
     let examRunning=false, submitted=false, startAtMs=0, submitAtMs=0;
     let inactiveStartMs=0, sid="", timerInt=null, gateTimerInt=null, reportUrl="";
+    let viewportWasTooSmall=false;
 
     const report = {
       timezone  : Intl.DateTimeFormat().resolvedOptions().timeZone||"Unknown",
@@ -258,6 +261,21 @@
     function tryOL(){ if(!screen.orientation||!screen.orientation.lock){addEvent("orientation_lock_na");return;} screen.orientation.lock("portrait").then(()=>addEvent("orientation_lock_ok")).catch(()=>addEvent("orientation_lock_fail")); }
     function getQUrl(){ return new URL("./questions.html",window.location.href).toString(); }
     function todayGateMs(){ const d=new Date(); d.setHours(START_HOUR,START_MIN,0,0); return d.getTime(); }
+    function currentViewport(){
+      const vv=window.visualViewport;
+      return {
+        width:Math.round((vv&&vv.width)||window.innerWidth||document.documentElement.clientWidth||0),
+        height:Math.round((vv&&vv.height)||window.innerHeight||document.documentElement.clientHeight||0)
+      };
+    }
+    function isExamViewportTooSmall(){
+      const vp=currentViewport();
+      return vp.width<MIN_EXAM_WIDTH || vp.height<MIN_EXAM_HEIGHT;
+    }
+    function viewportGateMessage(){
+      const vp=currentViewport();
+      return `Screen size chhota hai (${vp.width}x${vp.height}). Split screen band karke ya browser area bada karke start karein.`;
+    }
 
     function isStartGateOpen(){
       // ── TIME GATE DISABLED FOR TESTING ──
@@ -278,6 +296,11 @@
 
     function updateStartGateUi(){
       if(examRunning)return;
+      if(isExamViewportTooSmall()){
+        examBtn.disabled=true;
+        startGateLine.textContent=viewportGateMessage();
+        return;
+      }
       if(isStartGateOpen()){ examBtn.disabled=false; startGateLine.textContent=""; if(gateTimerInt)clearInterval(gateTimerInt); gateTimerInt=null; return; }
       examBtn.disabled=true;
       const rem=Math.max(0,Math.ceil((todayGateMs()-Date.now())/1000));
@@ -287,6 +310,14 @@
 
     function markInactiveStart(reason){ if(!examRunning||submitted||inactiveStartMs)return; inactiveStartMs=Date.now(); addEvent("inactive_start_page_hidden",{reason}); }
     function markInactiveEnd(reason){ if(!examRunning||submitted||!inactiveStartMs)return; const end=Date.now(),ms=end-inactiveStartMs; report.inactiveSessions.push({leftAtIso:new Date(inactiveStartMs).toISOString(),returnedAtIso:new Date(end).toISOString(),awayMs:ms}); report.summary.totalInactiveMs+=ms; inactiveStartMs=0; addEvent("inactive_end_page_visible",{reason,awaySeconds:Math.round(ms/1000)}); }
+    function handleViewportChange(){
+      const tooSmall=isExamViewportTooSmall();
+      if(examRunning&&!submitted&&tooSmall!==viewportWasTooSmall){
+        addEvent(tooSmall?"viewport_too_small":"viewport_restored",currentViewport());
+      }
+      viewportWasTooSmall=tooSmall;
+      updateStartGateUi();
+    }
 
     function computeResult(){
       const raw=localStorage.getItem(STORAGE.answersPrefix+sid); if(!raw)return;
@@ -430,6 +461,7 @@ li:last-child{border-bottom:none}
 
     function startExam(){
       if(window.location.hostname==="github.com"){setStatus("GitHub Pages (github.io) link se kholo.","bad");return;}
+      if(isExamViewportTooSmall()){setStatus(viewportGateMessage(),"bad");updateStartGateUi();return;}
       if(!isStartGateOpen()){setStatus("Abhi Start time gate band hai.","warn");return;}
       if(examRunning)return;
       clearOld(); submitted=false;
@@ -437,6 +469,7 @@ li:last-child{border-bottom:none}
       report.inactiveSessions=[]; report.events=[]; report.summary={totalInactiveMs:0};
       report.result={totalQuestions:0,attempted:0,correct:0,wrong:0,unattempted:0,baseScore:0,leaveIncidentCount:0,penaltyMarks:0,finalScore:0,selections:[]};
       report.exam={durationSeconds:EXAM_SECONDS,startAt:null,submitAt:null,submitReason:null,sessionId:null};
+      viewportWasTooSmall=false;
       examRunning=true; sid=`sess_${Date.now()}`; localStorage.setItem(STORAGE.active,sid);
       startAtMs=Date.now(); report.exam.startAt=new Date(startAtMs).toISOString(); report.exam.sessionId=sid;
       addEvent("exam_started"); enterExamOnlyView();
@@ -498,6 +531,9 @@ li:last-child{border-bottom:none}
     document.addEventListener("visibilitychange",()=>{ if(!examRunning||submitted)return; if(document.visibilityState==="hidden")markInactiveStart("visibility_hidden_background"); if(document.visibilityState==="visible")markInactiveEnd("visibility_visible_foreground"); });
     window.addEventListener("pagehide",()=>{ if(examRunning&&!submitted)markInactiveStart("pagehide_navigation"); });
     window.addEventListener("pageshow",e=>{ if(examRunning&&!submitted&&!e.persisted)markInactiveEnd("pageshow_back"); });
+    window.addEventListener("resize",handleViewportChange);
+    window.addEventListener("orientationchange",()=>setTimeout(handleViewportChange,250));
+    if(window.visualViewport) window.visualViewport.addEventListener("resize",handleViewportChange);
 
     addEvent("page_loaded"); renderSnapshot();
     // examBtn init hoga tab jab mainPage dikhega
