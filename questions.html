@@ -15,8 +15,9 @@
 
     /* Shell — flex column, no scroll */
     .shell{
-      height:max(100svh, 680px);
-      min-height:680px;
+      height:100vh;
+      height:100dvh;
+      min-height:0;
       display:flex; flex-direction:column;
       overflow:hidden;
     }
@@ -24,7 +25,8 @@
     /* Question area — scrolls internally if text overflows */
     .q-area{
       flex:1 1 auto; min-height:0;
-      overflow:hidden;
+      overflow-y:auto;
+      -webkit-overflow-scrolling:touch;
       padding:12px 14px 8px;
     }
     .meta{ color:var(--muted); font-size:clamp(12px,3vw,14px); margin-bottom:6px; }
@@ -50,15 +52,10 @@
     /* Controls — normal flow at bottom.
        NOT fixed — on split screen small windows they get cut off naturally (intentional). */
     .ctrl{
+      flex:0 0 auto;
       background:#020617;
       border-top:1px solid #1e2d45;
       padding:8px 12px 10px;
-    }
-    @media (max-width: 760px){
-      .shell{
-        height:max(calc(100svh + 280px), 900px);
-        min-height:900px;
-      }
     }
     .pal-label{
       font-size:clamp(11px,2.8vw,13px); color:var(--muted); margin-bottom:4px; font-weight:600;
@@ -95,6 +92,19 @@
     .sbtn:active{ opacity:.85; }
     .divider{ border:none; border-top:1px solid #1e2d45; margin:5px 0; }
     .hint{ color:#86efac; font-size:clamp(10px,2.5vw,12px); min-height:14px; text-align:center; margin-top:2px; }
+    .size-blocker{
+      position:fixed; inset:0; z-index:99999;
+      display:none; align-items:center; justify-content:center;
+      padding:18px; text-align:center;
+      background:#020617; color:#e2e8f0;
+    }
+    .size-blocker.show{ display:flex; }
+    .size-box{
+      max-width:420px; border:1px solid #334155; border-radius:12px;
+      background:#0b162b; padding:18px; box-shadow:0 10px 30px rgba(0,0,0,.35);
+    }
+    .size-box strong{ display:block; margin-bottom:8px; color:#fda4af; font-size:18px; }
+    .size-box span{ color:#cbd5e1; line-height:1.55; font-size:14px; }
   </style>
 </head>
 <body>
@@ -127,10 +137,18 @@
     <div class="hint" id="hint"></div>
   </div>
 </div>
+<div class="size-blocker" id="sizeBlocker" aria-live="polite">
+  <div class="size-box">
+    <strong>Screen size bahut chhota hai</strong>
+    <span>Exam content tabhi dikhega jab window normal size me ho. Split screen band karke ya browser area bada karke wapas aaiye.</span>
+  </div>
+</div>
 
 <script>
   const SESSION_KEY    = "exam_active_session";
   const ANSWER_KEY_PFX = "exam_answers_";
+  const MIN_EXAM_WIDTH = 320;
+  const MIN_EXAM_HEIGHT = 430;
 
   // ── QUESTIONS ──
   // kind: "mcq" = MCQ only | "logic" = reading/objective only
@@ -229,6 +247,20 @@
 
   function render(){ renderQ(); renderMcqPal(); renderLogPal(); }
 
+  function currentViewport(){
+    const vv=window.visualViewport;
+    return {
+      width:Math.round((vv&&vv.width)||window.innerWidth||document.documentElement.clientWidth||0),
+      height:Math.round((vv&&vv.height)||window.innerHeight||document.documentElement.clientHeight||0)
+    };
+  }
+
+  function updateSizeBlocker(){
+    const vp=currentViewport();
+    const tooSmall=vp.width<MIN_EXAM_WIDTH || vp.height<MIN_EXAM_HEIGHT;
+    document.getElementById("sizeBlocker").classList.toggle("show",tooSmall);
+  }
+
   document.getElementById("optsBox").addEventListener("change",e=>{
     if(!e.target||e.target.name!=="ans"||activeSection!=="mcq")return;
     const it=mcqItems[mcqIdx]; if(!it)return;
@@ -244,7 +276,11 @@
     if(window.parent&&window.parent!==window) window.parent.postMessage("submit_exam","*");
   });
 
-  loadState(); persist(); render();
+  window.addEventListener("resize",updateSizeBlocker);
+  window.addEventListener("orientationchange",()=>setTimeout(updateSizeBlocker,250));
+  if(window.visualViewport) window.visualViewport.addEventListener("resize",updateSizeBlocker);
+
+  loadState(); persist(); render(); updateSizeBlocker();
 </script>
 </body>
 </html>
