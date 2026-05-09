@@ -149,6 +149,7 @@
   const ANSWER_KEY_PFX = "exam_answers_";
   const MIN_EXAM_WIDTH = 340;
   const MIN_EXAM_HEIGHT = 520;
+  const FOCUS_LOSS_GRACE_MS = 1200;
 
   // ── QUESTIONS ──
   // kind: "mcq" = MCQ only | "logic" = reading/objective only
@@ -190,6 +191,7 @@
 
   let mcqIdx=0, logIdx=0, activeSection="mcq";
   let state={ sessionId, mcqQuestions, answers:{} };
+  let focusLossTimer=null, focusLossReported=false;
 
   function loadState(){ const raw=localStorage.getItem(storageKey); if(!raw)return; try{ const p=JSON.parse(raw); if(p&&p.answers)state.answers=p.answers||{}; }catch{} }
   function persist(){ localStorage.setItem(storageKey,JSON.stringify({sessionId:state.sessionId,questions:state.mcqQuestions,answers:state.answers,updatedAt:new Date().toISOString()})); document.getElementById("hint").textContent=`Saved ${new Date().toLocaleTimeString()}`; }
@@ -274,6 +276,27 @@
 
   document.getElementById("subBtn").addEventListener("click",()=>{
     if(window.parent&&window.parent!==window) window.parent.postMessage("submit_exam","*");
+  });
+
+  function postToParent(msg){
+    if(window.parent&&window.parent!==window) window.parent.postMessage(msg,"*");
+  }
+
+  window.addEventListener("blur",()=>{
+    if(focusLossTimer||focusLossReported)return;
+    focusLossTimer=setTimeout(()=>{
+      focusLossTimer=null;
+      focusLossReported=true;
+      postToParent("exam_focus_lost");
+    },FOCUS_LOSS_GRACE_MS);
+  });
+
+  window.addEventListener("focus",()=>{
+    if(focusLossTimer){ clearTimeout(focusLossTimer); focusLossTimer=null; }
+    if(focusLossReported){
+      focusLossReported=false;
+      postToParent("exam_focus_returned");
+    }
   });
 
   window.addEventListener("resize",updateSizeBlocker);
