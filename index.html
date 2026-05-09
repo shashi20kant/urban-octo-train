@@ -233,6 +233,8 @@
     let examRunning=false, submitted=false, startAtMs=0, submitAtMs=0;
     let inactiveStartMs=0, sid="", timerInt=null, gateTimerInt=null, reportUrl="";
     let viewportWasTooSmall=false;
+    let fullscreenWasOn=false;
+    let examViewportBase=null, systemUiRevealTimer=null, systemUiWasRevealed=false;
 
     const report = {
       timezone  : Intl.DateTimeFormat().resolvedOptions().timeZone||"Unknown",
@@ -316,7 +318,40 @@
         addEvent(tooSmall?"viewport_too_small":"viewport_restored",currentViewport());
       }
       viewportWasTooSmall=tooSmall;
+      detectSystemUiReveal();
       updateStartGateUi();
+    }
+    function detectSystemUiReveal(){
+      if(!examRunning||submitted)return;
+      const vp=currentViewport();
+      if(!examViewportBase){ examViewportBase=vp; return; }
+      if(vp.width>examViewportBase.width||vp.height>examViewportBase.height) examViewportBase=vp;
+      const heightDrop=examViewportBase.height-vp.height;
+      const widthDrop=examViewportBase.width-vp.width;
+      const suspicious=!!document.fullscreenElement&&!isExamViewportTooSmall()&&(heightDrop>=48||widthDrop>=48);
+      if(suspicious&&!systemUiWasRevealed&&!systemUiRevealTimer){
+        systemUiRevealTimer=setTimeout(()=>{
+          systemUiRevealTimer=null;
+          if(!examRunning||submitted)return;
+          systemUiWasRevealed=true;
+          addEvent("system_ui_revealed_possible_swipe",{...currentViewport(),heightDrop,widthDrop});
+        },500);
+      }
+      if(!suspicious){
+        if(systemUiRevealTimer){ clearTimeout(systemUiRevealTimer); systemUiRevealTimer=null; }
+        if(systemUiWasRevealed){
+          systemUiWasRevealed=false;
+          addEvent("system_ui_restored",currentViewport());
+        }
+      }
+    }
+    function handleFullscreenChange(){
+      if(!examRunning||submitted)return;
+      if(document.fullscreenElement){ fullscreenWasOn=true; return; }
+      if(fullscreenWasOn){
+        fullscreenWasOn=false;
+        addEvent("fullscreen_exited_possible_overlay");
+      }
     }
 
     function computeResult(){
@@ -470,12 +505,16 @@ li:last-child{border-bottom:none}
       report.result={totalQuestions:0,attempted:0,correct:0,wrong:0,unattempted:0,baseScore:0,leaveIncidentCount:0,penaltyMarks:0,finalScore:0,selections:[]};
       report.exam={durationSeconds:EXAM_SECONDS,startAt:null,submitAt:null,submitReason:null,sessionId:null};
       viewportWasTooSmall=false;
+      fullscreenWasOn=false;
+      examViewportBase=currentViewport();
+      systemUiWasRevealed=false;
+      if(systemUiRevealTimer){ clearTimeout(systemUiRevealTimer); systemUiRevealTimer=null; }
       examRunning=true; sid=`sess_${Date.now()}`; localStorage.setItem(STORAGE.active,sid);
       startAtMs=Date.now(); report.exam.startAt=new Date(startAtMs).toISOString(); report.exam.sessionId=sid;
       addEvent("exam_started"); enterExamOnlyView();
       frame.src=`${getQUrl()}?session=${encodeURIComponent(sid)}`;
       setStatus("Exam started.","ok");
-      requestFS().then(()=>addEvent("fullscreen_ok")).catch(()=>addEvent("fullscreen_fail")); tryOL();
+      requestFS().then(()=>{ fullscreenWasOn=!!document.fullscreenElement; examViewportBase=currentViewport(); addEvent("fullscreen_ok"); }).catch(()=>addEvent("fullscreen_fail")); tryOL();
       const endTs=startAtMs+EXAM_SECONDS*1000;
       if(timerInt)clearInterval(timerInt);
       timerInt=setInterval(()=>{ const rem=Math.ceil((endTs-Date.now())/1000); timerEl.textContent=mmss(rem); timerBox.classList.toggle("timer-warn",rem>0&&rem<=10*60); if(rem<=0){clearInterval(timerInt);timerEl.textContent="00:00";} },300);
@@ -494,7 +533,11 @@ li:last-child{border-bottom:none}
       renderSnapshot(); updateStartGateUi();
     }
 
-    window.addEventListener("message",e=>{ if(e.data==="submit_exam")submitExam("manual"); });
+    window.addEventListener("message",e=>{
+      if(e.data==="submit_exam")submitExam("manual");
+      if(e.data==="exam_focus_lost")markInactiveStart("question_frame_focus_lost_possible_overlay");
+      if(e.data==="exam_focus_returned")markInactiveEnd("question_frame_focus_returned");
+    });
     examBtn.addEventListener("click",()=>{ if(examRunning&&!submitted)submitExam("manual"); else startExam(); });
     shareModalOk.addEventListener("click",()=>shareModalWrap.classList.remove("show"));
 
@@ -534,6 +577,7 @@ li:last-child{border-bottom:none}
     window.addEventListener("resize",handleViewportChange);
     window.addEventListener("orientationchange",()=>setTimeout(handleViewportChange,250));
     if(window.visualViewport) window.visualViewport.addEventListener("resize",handleViewportChange);
+    document.addEventListener("fullscreenchange",handleFullscreenChange);
 
     addEvent("page_loaded"); renderSnapshot();
     // examBtn init hoga tab jab mainPage dikhega
