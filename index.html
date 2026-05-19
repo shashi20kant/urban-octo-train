@@ -624,6 +624,12 @@ li:last-child{border-bottom:none}
     let pwVerified = false;
 
     function showPasswordModal(){
+      // ✅ ADD THIS LINE: screen check
+  if(isExamViewportTooSmall()){
+    setStatus(viewportGateMessage(), "bad");
+    updateStartGateUi();
+    return;  // password modal nahi khulega
+  }
       // Already verified hai to seedha start karo
       if(pwVerified){ startExam(); return; }
       pwInput.value=""; pwError.textContent="";
