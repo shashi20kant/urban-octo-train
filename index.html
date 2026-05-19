@@ -1,4 +1,305 @@
-<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no"><style>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Physics Exam: Electrostatics</title>
+  <style>
+    :root {
+      --bg: #0b1220; --card: #121a2b; --line: #2b3b5e; --text: #e6eeff; --muted: #9db0d9;
+      --accent: #34d399; --danger: #fb7185; --gold: #fbbf24;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+      background: linear-gradient(120deg, #060b16, #0b1220, #111a2d);
+      color: var(--text);
+    }
+    body.pre-exam { overflow-y: auto; }
+    body.in-exam { overflow: hidden; position: fixed; width: 100%; height: 100%; }
+
+    /* Name Modal */
+    #nameModalWrap {
+      position: fixed; inset: 0; z-index: 20000; display: flex; align-items: center; justify-content: center;
+      background: linear-gradient(135deg, #060b16, #0b1220, #111a2d); padding: 20px;
+    }
+    #nameModal {
+      background: rgba(18,26,43,.98); border: 1px solid #2b3b5e; border-radius: 18px; max-width: 420px; width: 100%;
+      padding: 32px 24px; text-align: center; box-shadow: 0 8px 40px rgba(0,0,0,.6);
+    }
+    .nm-title { font-size: clamp(20px,5vw,26px); font-weight: 700; margin-bottom: 6px; background: linear-gradient(90deg,#34d399,#22d3ee,#a78bfa); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .nm-sub { color: #9db0d9; font-size: 14px; margin-bottom: 24px; }
+    #nameInput { width: 100%; padding: 14px 16px; border-radius: 12px; border: 2px solid #2b3b5e; background: #0d1829; color: #e6eeff; font-size: 16px; text-align: center; outline: none; }
+    #nameInput:focus { border-color: #34d399; }
+    #nameError { color: #fb7185; font-size: 13px; margin-top: 8px; }
+    #nameOkBtn { margin-top: 18px; width: 100%; padding: 15px; border: none; border-radius: 12px; background: linear-gradient(135deg,#34d399,#059669); color: white; font-weight: 700; cursor: pointer; }
+
+    /* Main layout */
+    .wrap { max-width: 1200px; margin: 0 auto; padding: 0 16px 32px; }
+    .card { background: rgba(18,26,43,.95); border: 1px solid var(--line); border-radius: 14px; padding: 18px; margin-bottom: 14px; }
+    .hidden { display: none !important; }
+    h1, h2 { margin: 0 0 10px; }
+    .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+
+    /* header left align */
+    #welcomeBanner {
+      display: flex; justify-content: space-between; align-items: baseline;
+      padding: 12px 20px 4px; border-bottom: 1px solid #2b3b5e; margin-bottom: 16px;
+    }
+    .name-left { font-size: 1.2rem; font-weight: 600; background: linear-gradient(90deg,#34d399,#22d3ee); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .exam-title { font-size: 1.3rem; font-weight: bold; letter-spacing: 1px; color: #fbbf24; }
+
+    button { border: 0; border-radius: 10px; padding: 12px 18px; font-weight: 700; cursor: pointer; }
+    #examBtn { background: linear-gradient(135deg,#34d399,#059669); color: white; padding: 14px 28px; border-radius: 12px; box-shadow: 0 4px 15px rgba(52,211,153,.3); }
+    #examBtn:disabled { background: #3d4f5f; color: #93a8c4; cursor: not-allowed; }
+    .secondary { background: #2c3f63; color: #eef5ff; }
+
+    #timerBox { position: fixed; top: 12px; right: 12px; background: rgba(8,14,26,.96); border: 1px solid #355081; border-radius: 12px; padding: 8px 14px; display: none; z-index: 9999; white-space: nowrap; }
+    #timer { font-size: clamp(20px,5vw,26px); letter-spacing: 2px; font-weight: 700; }
+    .timer-warn { border-color: #f87171; background: rgba(62,17,26,.95); }
+
+    #examOverlay { display: none; position: fixed; inset: 0; z-index: 5000; background: #040914; flex-direction: column; padding-top: 74px; }
+    #examOverlay.active { display: flex; }
+    #examFrameWrap { flex: 1; min-height: 0; overflow: hidden; }
+    #questionFrame { width: 100%; height: 100%; border: none; background: #040914; }
+
+    .report-box { background: #0a1221; border: 1px solid #29426c; border-radius: 12px; padding: 14px; line-height: 1.7; }
+    #snapshotView { margin: 0; background: #050b17; border-radius: 10px; padding: 12px; max-height: 280px; overflow: auto; font-family: monospace; white-space: pre-wrap; font-size: 12px; }
+
+    #shareModalWrap { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,0.8); z-index: 10005; }
+    #shareModalWrap.show { display: flex; }
+    #shareModal { background: #151f33; border-radius: 14px; max-width: 440px; width: 100%; padding: 22px; }
+  </style>
+</head>
+<body>
+  <div id="nameModalWrap">
+    <div id="nameModal">
+      <div class="nm-title">⚡ ELECTROSTATICS EXAM ⚡</div>
+      <div class="nm-sub">Exam start karne ke liye apna naam likhein</div>
+      <input type="text" id="nameInput" placeholder="Full Name" maxlength="50" autocomplete="off" />
+      <div id="nameError"></div>
+      <button id="nameOkBtn">OK → Start</button>
+    </div>
+  </div>
+
+  <div id="timerBox"><small>Time left</small><br><b id="timer">90:00</b></div>
+
+  <div id="examOverlay">
+    <div id="examFrameWrap"><iframe id="questionFrame" title="Exam" allow="fullscreen"></iframe></div>
+  </div>
+
+  <div id="mainPage" class="hidden">
+    <div id="welcomeBanner">
+      <span class="name-left">👤 <span id="welcomeName"></span></span>
+      <span class="exam-title">⚡ PHYSICS - ELECTROSTATICS ⚡</span>
+      <span style="width:80px"></span>
+    </div>
+    <div class="wrap">
+      <section class="card">
+        <h2>📘 Instructions</h2>
+        <p>➤ Total marks: <strong>50</strong> (20 MCQ × 1 mark each + 10 Subjective × 3 marks each).<br>
+        ➤ Inactive tab / app switch track hoga — 3 baar bahar jaane par <strong>-1 Negative Marks</strong> (penalty).<br>
+        ➤ Exam fullscreen mode me hoga. Split screen ya size chhota karne par warning aayegi.<br>
+        ➤ Subjective answers text box me likhein, apne aap save honge. Submit ke baad report generate hogi.<br>
+        ➤ Report me har MCQ ka sahi uttar aur explanation bhi milega.</p>
+      </section>
+
+      <section class="card">
+        <h1>📝 Online Exam</h1>
+        <div class="row">
+          <button id="examBtn">Start Exam (90 min)</button>
+          <span id="startGateLine"></span>
+        </div>
+        <p id="status"></p>
+      </section>
+
+      <section class="card">
+        <h2>📊 Result & Report</h2>
+        <div class="row hidden" id="afterSubmitActions">
+          <button class="secondary" id="openPdfBtn">Open Report Link</button>
+          <button class="secondary" id="shareBtn">Share Report</button>
+          <button class="secondary" id="viewResultBtn">View Result</button>
+          <button class="secondary" id="downloadResultBtn">Download Result</button>
+        </div>
+        <div id="resultView" class="report-box hidden"></div>
+      </section>
+
+      <section class="card">
+        <h2>📄 Report Preview (Live)</h2>
+        <pre id="snapshotView">{"status": "Exam start hote hi draft dikhega."}</pre>
+      </section>
+    </div>
+  </div>
+
+  <div id="shareModalWrap">
+    <div id="shareModal">
+      <h3>✅ Exam Submit Ho Gayi</h3>
+      <p>Share Report button se result save/share karein.</p>
+      <button id="shareModalOk">OK</button>
+    </div>
+  </div>
+
+  <script>
+    (function(){
+      // ---- CONSTANTS ----
+      const EXAM_SECONDS = 90 * 60;
+      const LOCAL_UNLOCK_KEY = "exam_start_unlocked_forever";
+      const STORAGE = { active:"exam_active_session", answersPrefix:"exam_answers_", reportPrefix:"exam_report_" };
+      const MIN_EXAM_WIDTH = 360, MIN_EXAM_HEIGHT = 620;
+      const MIN_INACTIVE_MS = 500;
+
+      // ---- Name gate ----
+      let studentName = "";
+      const nameModalWrap = document.getElementById("nameModalWrap");
+      const nameInput = document.getElementById("nameInput");
+      const nameError = document.getElementById("nameError");
+      const nameOkBtn = document.getElementById("nameOkBtn");
+      const mainPage = document.getElementById("mainPage");
+      const welcomeNameSpan = document.getElementById("welcomeName");
+
+      function submitName(){
+        const raw = nameInput.value.trim();
+        if(!raw){ nameError.textContent = "Naam likhna zaroori hai."; return; }
+        if(raw.length < 2){ nameError.textContent = "Kam se kam 2 characters."; return; }
+        studentName = raw.toUpperCase();
+        welcomeNameSpan.textContent = studentName;
+        nameModalWrap.style.display = "none";
+        mainPage.classList.remove("hidden");
+        document.body.classList.add("pre-exam");
+        examBtn.disabled = true;
+        updateStartGateUi();
+      }
+      nameOkBtn.addEventListener("click", submitName);
+      nameInput.addEventListener("keydown", e => { if(e.key === "Enter") submitName(); });
+
+      // ---- DOM elements ----
+      const examBtn = document.getElementById("examBtn");
+      const statusEl = document.getElementById("status");
+      const timerBox = document.getElementById("timerBox");
+      const timerEl = document.getElementById("timer");
+      const startGateLine = document.getElementById("startGateLine");
+      const frame = document.getElementById("questionFrame");
+      const examOverlay = document.getElementById("examOverlay");
+      const afterSubmitActions = document.getElementById("afterSubmitActions");
+      const snapshotView = document.getElementById("snapshotView");
+      const shareModalWrap = document.getElementById("shareModalWrap");
+      const shareModalOk = document.getElementById("shareModalOk");
+      const openPdfBtn = document.getElementById("openPdfBtn");
+      const shareBtn = document.getElementById("shareBtn");
+      const viewResultBtn = document.getElementById("viewResultBtn");
+      const downloadResultBtn = document.getElementById("downloadResultBtn");
+
+      let examRunning = false, submitted = false, startAtMs = 0, submitAtMs = 0;
+      let inactiveStartMs = 0, sid = "", timerInt = null, gateTimerInt = null, reportUrl = "";
+      let viewportWasTooSmall = false, fullscreenWasOn = false, examViewportBase = null;
+      let parentFocusLost = false, focusPollInt = null;
+
+      // Report object
+      let report = {
+        studentName: "",
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        userAgent: navigator.userAgent,
+        exam: { durationSeconds: EXAM_SECONDS, startAt: null, submitAt: null, submitReason: null, sessionId: null },
+        inactiveSessions: [],
+        events: [],
+        result: { totalQuestions:0, attempted:0, correct:0, wrong:0, unattempted:0, baseScore:0, leaveIncidentCount:0, negativeMarks:0, finalScore:0, selections:[] },
+        summary: { totalInactiveMs:0 }
+      };
+
+      // helpers
+      function nowIso(){ return new Date().toISOString(); }
+      function mmss(sec){ const s=Math.max(0,Math.floor(sec)); return `${String(Math.floor(s/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`; }
+      function fmtDate(ts){ return new Date(ts||Date.now()).toLocaleString(); }
+      function fmtTime(ts){ return new Date(ts||Date.now()).toLocaleTimeString(); }
+      function fmtDur(ms){ const s=Math.floor(ms/1000), m=Math.floor(s/60), r=s%60; return `${m}m ${r}s`; }
+      function esc(str){ return String(str).replace(/[&<>]/g, function(m){ if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m; }); }
+      function renderSnapshot(){ snapshotView.textContent = JSON.stringify({ student:report.studentName, examStatus:report.exam.submitAt?"submitted":"ongoing", score:report.result.finalScore, negativeMarks:report.result.negativeMarks },null,2); }
+      function saveDraft(){ if(sid) localStorage.setItem(STORAGE.reportPrefix+sid, JSON.stringify(report)); }
+      function addEvent(type,details={}){ report.events.push({ at:nowIso(), type, ...details }); saveDraft(); renderSnapshot(); }
+      function currentViewport(){ const vv=window.visualViewport; return { width:Math.round(vv?.width||window.innerWidth), height:Math.round(vv?.height||window.innerHeight) }; }
+      function isExamViewportTooSmall(){ const vp=currentViewport(); return vp.width<MIN_EXAM_WIDTH || vp.height<MIN_EXAM_HEIGHT; }
+
+      // Start gate (disabled for testing => always true)
+      function isStartGateOpen(){ return true; }
+      function updateStartGateUi(){
+        if(examRunning) return;
+        if(isExamViewportTooSmall()){ examBtn.disabled=true; startGateLine.textContent="Screen size chhota hai → bada karein."; return; }
+        if(isStartGateOpen()){ examBtn.disabled=false; startGateLine.textContent=""; if(gateTimerInt)clearInterval(gateTimerInt); gateTimerInt=null; return; }
+        examBtn.disabled=true;
+        const rem=Math.max(0, Math.ceil((new Date().setHours(16,40,0,0)-Date.now())/1000));
+        startGateLine.textContent=`Start locked: ~${Math.floor(rem/60)} min`;
+        if(!gateTimerInt) gateTimerInt=setInterval(updateStartGateUi,500);
+      }
+
+      // Inactivity track
+      function markInactiveStart(reason){ if(examRunning && !submitted && !inactiveStartMs){ inactiveStartMs=Date.now(); addEvent("inactive_start",{reason}); } }
+      function markInactiveEnd(reason){
+        if(!examRunning || submitted || !inactiveStartMs) return;
+        const ms = Date.now() - inactiveStartMs;
+        inactiveStartMs=0;
+        if(ms<MIN_INACTIVE_MS){ addEvent("brief_focus_interruption",{reason,ms}); return; }
+        report.inactiveSessions.push({ leftAt:new Date(ms), returnedAt:nowIso(), awayMs:ms });
+        report.summary.totalInactiveMs += ms;
+        addEvent("inactive_end",{reason, awaySec:Math.round(ms/1000)});
+      }
+      function checkParentFocus(){
+        if(!examRunning || submitted) return;
+        if(document.hasFocus()){ if(parentFocusLost){ parentFocusLost=false; markInactiveEnd("focus_returned"); } }
+        else { if(!parentFocusLost){ parentFocusLost=true; markInactiveStart("focus_lost"); } }
+      }
+      document.addEventListener("visibilitychange",()=>{
+        if(!examRunning||submitted) return;
+        if(document.hidden) markInactiveStart("tab_hidden");
+        else markInactiveEnd("tab_visible");
+      });
+      window.addEventListener("blur",()=>{ if(examRunning && !submitted) markInactiveStart("window_blur"); });
+      window.addEventListener("focus",()=>{ if(examRunning && !submitted) markInactiveEnd("window_focus"); });
+
+      // Fullscreen & size
+      function requestFS(){ if(document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(e=>addEvent("fullscreen_fail")); }
+      function handleFullscreenChange(){ if(!examRunning||submitted) return; if(document.fullscreenElement) fullscreenWasOn=true; else if(fullscreenWasOn){ fullscreenWasOn=false; addEvent("fullscreen_exited"); } }
+      document.addEventListener("fullscreenchange", handleFullscreenChange);
+      window.addEventListener("resize",()=>{ if(examRunning&&!submitted && isExamViewportTooSmall()!==viewportWasTooSmall) addEvent(isExamViewportTooSmall()?"viewport_small":"viewport_ok"); viewportWasTooSmall=isExamViewportTooSmall(); updateStartGateUi(); });
+
+      // ---- BUILD QUESTIONS IFRAME CONTENT (20 MCQ + 10 SUBJECTIVE) ----
+      function buildQuestionsHtml(sessionId){
+        // 20 Physics Electrostatics MCQs with correct option & explanation
+        const mcqs = [
+          { id:"mcq1", text:"The intensity of electric field at any point on the surface of a charged conductor is:", options:{ A:"Zero", B:"Perpendicular to the surface", C:"Tangential to the surface", D:"at 45° to the surface" }, correct:"B", explanation:"Electric field just outside a charged conductor is perpendicular to surface; otherwise charges would move." },
+          { id:"mcq2", text:"Torque experienced by electric dipole of dipole moment P placed in electric field E is:", options:{ A:"P x E", B:"P / E", C:"P . E", D:"none" }, correct:"A", explanation:"Torque = vector cross product p × E, aligns dipole with field." },
+          { id:"mcq3", text:"Total electric flux over a closed surface is ……. the total charge enclosed (Gauss law):", options:{ A:"1/ε₀ times", B:"1/4π times", C:"ε₀ times", D:"Zero times" }, correct:"A", explanation:"Gauss's law: Φ = q_enclosed / ε₀." },
+          { id:"mcq4", text:"Electrostatic potential on the perpendicular bisector due to an electric dipole is:", options:{ A:"Zero", B:"1", C:"Infinite", D:"Negative" }, correct:"A", explanation:"Potential due to +q and -q cancel at equatorial line." },
+          { id:"mcq5", text:"Unit of capacitance of capacitor is:", options:{ A:"Farad", B:"hennery", C:"tesla", D:"weber" }, correct:"A", explanation:"Farad = Coulomb/Volt, SI unit of capacitance." },
+          { id:"mcq6", text:"Quantity that remains same in parallel combination of capacitors is:", options:{ A:"Charge", B:"Energy", C:"Potential", D:"All" }, correct:"C", explanation:"Parallel combination me voltage same hota hai har capacitor par." },
+          { id:"mcq7", text:"The capacity of parallel plate capacitor increases when:", options:{ A:"area decreased", B:"area increased or dielectric inserted", C:"distance increases", D:"None" }, correct:"B", explanation:"C = εA/d, area badhane ya dielectric se capacitance badhti hai." },
+          { id:"mcq8", text:"Coulombian force is:", options:{ A:"Central force", B:"Electric force", C:"Both A and B", D:"None" }, correct:"C", explanation:"Coulomb force acts along line joining charges → central & electric." },
+          { id:"mcq9", text:"The value of εᵣ in air is:", options:{ A:"Zero", B:"Infinity", C:"1", D:"9×10⁹" }, correct:"C", explanation:"Relative permittivity of air/vacuum ≈ 1." },
+          { id:"mcq10", text:"Surface charge density σ, electric field near conductor is:", options:{ A:"σ/ε₀", B:"σ/2ε₀", C:"σ/3ε₀", D:"2σ/ε₀" }, correct:"A", explanation:"E = σ/ε₀ for conductor surface (normal component)." },
+          { id:"mcq11", text:"Relative permittivity εᵣ of a medium equals:", options:{ A:"E/E₀", B:"E×E₀", C:"E+E₀", D:"E−E₀" }, correct:"A", explanation:"εᵣ = E₀/E (ratio of field in vacuum to medium)." },
+          { id:"mcq12", text:"Unit of electric field intensity is:", options:{ A:"NC", B:"N/C", C:"Vm", D:"C/N" }, correct:"B", explanation:"N/C (Newton per Coulomb) or V/m." },
+          { id:"mcq13", text:"Two electric field lines intersect at what angle?", options:{ A:"90°", B:"45°", C:"30°", D:"Do not intersect" }, correct:"D", explanation:"Field lines never intersect because at intersection field would have two directions." },
+          { id:"mcq14", text:"If charge on object is doubled then electric field becomes:", options:{ A:"Thrice", B:"Unchanged", C:"Double", D:"Half" }, correct:"C", explanation:"E ∝ q, so doubling charge doubles field." },
+          { id:"mcq15", text:"Work 20 J to carry 2 C charge between points. Potential difference (V) will be:", options:{ A:"10", B:"20", C:"5", D:"2" }, correct:"A", explanation:"V = W/q = 20J/2C = 10V." },
+          { id:"mcq16", text:"Surface density of charge is:", options:{ A:"Total charge / Total area", B:"Total charge / Total volume", C:"Total charge × area", D:"Charge × volume" }, correct:"A", explanation:"σ = Q / A (charge per unit area)." },
+          { id:"mcq17", text:"Electrostatic field is:", options:{ A:"Conservative", B:"Non-conservative", C:"Somewhere conservative", D:"None" }, correct:"A", explanation:"Work done in closed loop = 0, hence conservative." },
+          { id:"mcq18", text:"S.I. unit of electric flux is:", options:{ A:"Weber", B:"Nm²/C", C:"Newton/m", D:"m²/s" }, correct:"B", explanation:"Nm²/C (or V·m)." },
+          { id:"mcq19", text:"Value of 1/(4πε₀) is:", options:{ A:"9×10⁹ Nm²/C²", B:"8.85×10⁻¹²", C:"9×10⁻⁹", D:"Zero" }, correct:"A", explanation:"Coulomb constant k = 9×10⁹ Nm²/C²." },
+          { id:"mcq20", text:"Permittivity of free space ε₀ is:", options:{ A:"9×10⁹ mF⁻¹", B:"8.85×10⁻¹² F/m", C:"1.6×10⁻¹⁹ C", D:"None" }, correct:"B", explanation:"ε₀ = 8.854×10⁻¹² F/m." }
+        ];
+        const subjective = [
+          { id:"sub1", q:"Define electric dipole moment. Write its SI unit." },
+          { id:"sub2", q:"Define Electric Flux and write its SI unit." },
+          { id:"sub3", q:"What do you mean by Quantization of Charge?" },
+          { id:"sub4", q:"State any two properties of Electric Lines of Force." },
+          { id:"sub5", q:"Define Electrostatic Shielding and give one practical example." },
+          { id:"sub6", q:"State and explain the Principle of Superposition of charges." },
+          { id:"sub7", q:"Why do two electric field lines never intersect each other?" },
+          { id:"sub8", q:"Define Dielectric Strength and Permittivity of a medium." },
+          { id:"sub9", q:"Define Electric Dipole Moment and write its S.I. unit." },
+          { id:"sub10", q:"State Gauss's Theorem of Electrostatics." }
+        ];
+
+        return `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no"><style>
           *{box-sizing:border-box; margin:0;} body{ background:#020617; color:#e2e8f0; font-family:Arial,sans-serif; overflow:hidden; height:100vh; display:flex; flex-direction:column; }
           .sections{ flex:1; overflow-y:auto; padding:16px; }
           .section-card{ background:#0f172a; border-radius:16px; margin-bottom:24px; padding:14px; border:1px solid #334155; }
