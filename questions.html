@@ -14,20 +14,31 @@
       font-family:Arial,sans-serif; background:var(--bg); color:var(--text);
     }
 
-    /* Shell — flex column, no scroll */
-    .shell{
-      height:100vh;
-      height:100dvh;
-      min-height:0;
-      display:flex; flex-direction:column;
-      overflow:hidden;
+    /* ── Rotation fix: jab landscape ho aur lock na kaam kare ── */
+    @media screen and (orientation: landscape) and (max-height: 500px) {
+      #rotateBlocker { display:flex !important; }
     }
+    #rotateBlocker {
+      display:none;
+      position:fixed; inset:0; z-index:999999;
+      background:#020617;
+      align-items:center; justify-content:center;
+      text-align:center; padding:24px;
+      flex-direction:column; gap:14px;
+    }
+    #rotateBlocker .rb-icon { font-size:52px; }
+    #rotateBlocker .rb-msg {
+      color:#e2e8f0; font-size:clamp(15px,4vw,20px); font-weight:600; line-height:1.5;
+    }
+    #rotateBlocker .rb-sub { color:#94a3b8; font-size:13px; }
 
-    /* Question area — scrolls internally if text overflows */
+    .shell{
+      height:100vh; height:100dvh; min-height:0;
+      display:flex; flex-direction:column; overflow:hidden;
+    }
     .q-area{
       flex:1 1 auto; min-height:0;
-      overflow-y:auto;
-      -webkit-overflow-scrolling:touch;
+      overflow-y:auto; -webkit-overflow-scrolling:touch;
       padding:12px 14px 8px;
     }
     .meta{ color:var(--muted); font-size:clamp(12px,3vw,14px); margin-bottom:6px; }
@@ -46,36 +57,29 @@
     .opt input[type=radio]{ accent-color:var(--acc); flex-shrink:0; width:18px; height:18px; }
     .logic-body{
       border:1px solid #33507e; border-radius:10px; padding:14px;
-      background:#0b162b; color:#dbeafe; line-height:1.6;
-      font-size:clamp(14px,3.8vw,17px);
+      background:#0b162b; color:#dbeafe; line-height:1.7;
+      font-size:clamp(14px,3.8vw,16px);
     }
+    .logic-body h3{ color:#22d3ee; font-size:clamp(15px,4vw,18px); margin:0 0 10px; border-bottom:1px solid #1e3a5f; padding-bottom:6px; }
+    .logic-body .marks-note{ margin-top:12px; color:#a78bfa; font-size:13px; border-top:1px solid #1e3a5f; padding-top:8px; }
 
-    /* Controls — normal flow at bottom.
-       NOT fixed — on split screen small windows they get cut off naturally (intentional). */
     .ctrl{
-      flex:0 0 auto;
-      background:#020617;
-      border-top:1px solid #1e2d45;
-      padding:8px 12px 10px;
+      flex:0 0 auto; background:#020617;
+      border-top:1px solid #1e2d45; padding:8px 12px 10px;
     }
-    .pal-label{
-      font-size:clamp(11px,2.8vw,13px); color:var(--muted); margin-bottom:4px; font-weight:600;
-    }
+    .pal-label{ font-size:clamp(11px,2.8vw,13px); color:var(--muted); margin-bottom:4px; font-weight:600; }
     .palette{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom:6px; }
     .pill{
-      width:clamp(32px,8vw,40px); height:clamp(32px,8vw,40px);
+      width:clamp(30px,7.5vw,38px); height:clamp(30px,7.5vw,38px);
       border-radius:50%; border:1px solid var(--line);
       background:#1e293b; color:#cbd5e1; cursor:pointer; font-weight:700;
-      font-size:clamp(12px,3.2vw,15px);
+      font-size:clamp(11px,3vw,14px);
       display:flex; align-items:center; justify-content:center; padding:0;
     }
     .pill.am{ outline:2px solid var(--acc); outline-offset:1px; }
     .pill.al{ outline:2px solid var(--acc2); outline-offset:1px; }
     .pill.answered{ background:#14532d; border-color:#22c55e; color:#86efac; }
-    .nav-row{
-      display:flex; gap:7px; align-items:center;
-      justify-content:center; margin-bottom:5px;
-    }
+    .nav-row{ display:flex; gap:7px; align-items:center; justify-content:center; margin-bottom:5px; }
     .nlabel{ font-size:clamp(11px,3vw,13px); color:var(--muted); min-width:44px; text-align:center; }
     button{
       border:0; border-radius:9px; cursor:pointer;
@@ -86,40 +90,41 @@
     button:disabled{ opacity:0.35; cursor:not-allowed; }
     .sbtn{
       background:linear-gradient(135deg,#16a34a,#15803d,#059669);
-      color:#fff;
-      box-shadow:0 3px 12px rgba(22,163,74,.35);
+      color:#fff; box-shadow:0 3px 12px rgba(22,163,74,.35);
       padding:clamp(8px,2.5vw,11px) clamp(16px,4vw,24px);
     }
     .sbtn:active{ opacity:.85; }
     .divider{ border:none; border-top:1px solid #1e2d45; margin:5px 0; }
     .hint{ color:#86efac; font-size:clamp(10px,2.5vw,12px); min-height:14px; text-align:center; margin-top:2px; }
+
     .size-blocker{
       position:fixed; inset:0; z-index:99999;
       display:none; align-items:center; justify-content:center;
-      padding:18px; text-align:center;
-      background:#020617; color:#e2e8f0;
+      padding:18px; text-align:center; background:#020617; color:#e2e8f0;
     }
     .size-blocker.show{ display:flex; }
-    .size-box{
-      max-width:420px; border:1px solid #334155; border-radius:12px;
-      background:#0b162b; padding:18px; box-shadow:0 10px 30px rgba(0,0,0,.35);
-    }
+    .size-box{ max-width:420px; border:1px solid #334155; border-radius:12px; background:#0b162b; padding:18px; }
     .size-box strong{ display:block; margin-bottom:8px; color:#fda4af; font-size:18px; }
     .size-box span{ color:#cbd5e1; line-height:1.55; font-size:14px; }
   </style>
 </head>
 <body>
+
+<!-- Rotate blocker — landscape pe dikhega -->
+<div id="rotateBlocker">
+  <div class="rb-icon">🔄</div>
+  <div class="rb-msg">Phone ko seedha (Portrait) karein</div>
+  <div class="rb-sub">Exam sirf portrait mode me chalta hai.<br>Rotation lock on karke phone seedha pakdein.</div>
+</div>
+
 <div class="shell">
-  <!-- Scrollable question -->
   <div class="q-area">
     <div class="meta" id="metaText"></div>
     <div class="q-text" id="qText"></div>
     <div id="optsBox"></div>
   </div>
-
-  <!-- Controls — natural flow, cut off on very small/split screens intentionally -->
   <div class="ctrl">
-    <div class="pal-label">MCQ Questions</div>
+    <div class="pal-label">MCQ Questions (20)</div>
     <div class="palette" id="mcqPal"></div>
     <div class="nav-row">
       <button id="mp">&#8592; Back</button>
@@ -127,7 +132,7 @@
       <button id="mn">Next &#8594;</button>
     </div>
     <hr class="divider">
-    <div class="pal-label">Objective / Reading</div>
+    <div class="pal-label">Short Answer Questions (10)</div>
     <div class="palette" id="logPal"></div>
     <div class="nav-row">
       <button id="lp">&#8592; Back</button>
@@ -138,6 +143,7 @@
     <div class="hint" id="hint"></div>
   </div>
 </div>
+
 <div class="size-blocker" id="sizeBlocker" aria-live="polite">
   <div class="size-box">
     <strong>Screen size bahut chhota hai</strong>
@@ -149,36 +155,47 @@
   const SESSION_KEY    = "exam_active_session";
   const ANSWER_KEY_PFX = "exam_answers_";
   const MIN_EXAM_WIDTH = 360;
-  const MIN_EXAM_HEIGHT = 620;
+  const MIN_EXAM_HEIGHT = 500; // portrait me height
 
-  // ── QUESTIONS ──
-  // kind: "mcq" = MCQ only | "logic" = reading/objective only
-  const items = [
-    {
-      id:"s1", kind:"logic",
-      headline:"Objective 1 — Reading",
-      body:"Yeh sirf padaav hai. Ye objective MCQ me count nahi hoga."
-    },
-    {
-      id:"h2", kind:"mcq",
-      mcqTitle:"Web page par external JS ka sahi tarika?",
-      options:{ A:"<script src='app.js'><\/script>", B:"<javascript src='app.js'>", C:"<js href='app.js'>", D:"<link rel='script' href='app.js'>" },
-      correctOption:"A"
-    },
-    {
-      id:"m3", kind:"mcq",
-      mcqTitle:"CSS me text rang set karne waala property?",
-      options:{ A:"font-style", B:"text-color", C:"color", D:"font-color" },
-      correctOption:"C"
-    },
-    {
-      id:"h4", kind:"mcq",
-      mcqTitle:"HTML ka poora naam?",
-      options:{ A:"Hyper Text Markup Language", B:"High Tool Markup Language", C:"Hyper Tab Mark Language", D:"Home Text Model Language" },
-      correctOption:"A"
-    }
+  // ── 20 MCQ QUESTIONS ──
+  const mcqData = [
+    { id:"q1",  kind:"mcq", mcqTitle:"1. The intensity of electric field at any point on the surface of a charged conductor is:", options:{A:"Zero",B:"Perpendicular to the surface",C:"Tangential to the surface",D:"At 45° to the surface"}, correctOption:"B" },
+    { id:"q2",  kind:"mcq", mcqTitle:"2. Torque experienced by electric dipole of dipole moment P placed in electric field E is:", options:{A:"P × E",B:"P / E",C:"P · E",D:"None of these"}, correctOption:"A" },
+    { id:"q3",  kind:"mcq", mcqTitle:"3. The total electric flux over a closed surface is ……… the total charge enclosed by it. (Gauss Law)", options:{A:"1/ε₀ times",B:"1/4π times",C:"ε₀ times",D:"Zero times"}, correctOption:"A" },
+    { id:"q4",  kind:"mcq", mcqTitle:"4. The electrostatic potential on the perpendicular bisector due to an electric dipole is:", options:{A:"Zero",B:"1",C:"Infinite",D:"Negative"}, correctOption:"A" },
+    { id:"q5",  kind:"mcq", mcqTitle:"5. Unit of capacitance of capacitor is:", options:{A:"Farad",B:"Henry",C:"Tesla",D:"Weber"}, correctOption:"A" },
+    { id:"q6",  kind:"mcq", mcqTitle:"6. Quantity that remains same in parallel combination of capacitors is:", options:{A:"Charge",B:"Energy",C:"Potential",D:"All of these"}, correctOption:"C" },
+    { id:"q7",  kind:"mcq", mcqTitle:"7. The capacity of the parallel plate capacitor increases when:", options:{A:"Area of plate is decreased",B:"Area increased or dielectric is inserted",C:"Distance between plates increases",D:"None of the option"}, correctOption:"B" },
+    { id:"q8",  kind:"mcq", mcqTitle:"8. Coulombian force is:", options:{A:"Central force",B:"Electric force",C:"Both (a) and (b)",D:"None of these"}, correctOption:"C" },
+    { id:"q9",  kind:"mcq", mcqTitle:"9. The value of εr (relative permittivity) in air is:", options:{A:"Zero",B:"Infinity",C:"1",D:"9 × 10⁹"}, correctOption:"C" },
+    { id:"q10", kind:"mcq", mcqTitle:"10. Surface charge density of a conductor is σ. Electric field near it is:", options:{A:"σ / ε₀",B:"σ / 2ε₀",C:"σ / 3ε₀",D:"2σ / ε₀"}, correctOption:"A" },
+    { id:"q11", kind:"mcq", mcqTitle:"11. The relative permittivity εr of a medium is equal to:", options:{A:"E₀ / E",B:"E × E₀",C:"E + E₀",D:"E − E₀"}, correctOption:"A" },
+    { id:"q12", kind:"mcq", mcqTitle:"12. The unit of electric field intensity is:", options:{A:"NC",B:"NC⁻¹",C:"Vm",D:"CN⁻¹"}, correctOption:"B" },
+    { id:"q13", kind:"mcq", mcqTitle:"13. At what angle do two electric field lines intersect each other?", options:{A:"90°",B:"45°",C:"30°",D:"They never intersect"}, correctOption:"D" },
+    { id:"q14", kind:"mcq", mcqTitle:"14. If the charge on an object is doubled then electric field becomes:", options:{A:"Thrice",B:"Unchanged",C:"Double",D:"Half"}, correctOption:"B" },
+    { id:"q15", kind:"mcq", mcqTitle:"15. A work of 20 J is needed in carrying a charge of 2 coulomb from one point to other. Potential difference in volt will be:", options:{A:"10 V",B:"20 V",C:"5 V",D:"2 V"}, correctOption:"A" },
+    { id:"q16", kind:"mcq", mcqTitle:"16. Surface density of charge is equal to:", options:{A:"Total charge / Total area",B:"Total charge / Total volume",C:"Total charge × Total area",D:"Total charge × Total volume"}, correctOption:"A" },
+    { id:"q17", kind:"mcq", mcqTitle:"17. Electrostatic field is:", options:{A:"Conservative",B:"Non-conservative",C:"Somewhere conservative",D:"None of these"}, correctOption:"A" },
+    { id:"q18", kind:"mcq", mcqTitle:"18. The S.I. unit of electric flux is:", options:{A:"Weber",B:"Nm²C⁻¹",C:"Newton / m",D:"m² / s"}, correctOption:"B" },
+    { id:"q19", kind:"mcq", mcqTitle:"19. The value of 1/4πε₀ is:", options:{A:"9 × 10⁹ Nm²C⁻²",B:"8.85 × 10⁻¹² Nm²C⁻²",C:"9 × 10⁻⁹ Nm²C⁻²",D:"Zero"}, correctOption:"A" },
+    { id:"q20", kind:"mcq", mcqTitle:"20. Permittivity (ε₀) of free space is:", options:{A:"9 × 10⁹ mF⁻¹",B:"1.6 × 10⁻¹⁹ C",C:"8.85 × 10⁻¹² Fm⁻¹",D:"None of these"}, correctOption:"C" }
   ];
 
+  // ── 10 SHORT ANSWER QUESTIONS ──
+  const subjectiveData = [
+    { id:"s1",  kind:"logic", headline:"Short Answer Q1 (3 Marks)", body:"Define electric dipole moment. Write its S.I. unit.\n\n💡 Hint: p = q × 2l, direction −q to +q, unit: C·m" },
+    { id:"s2",  kind:"logic", headline:"Short Answer Q2 (3 Marks)", body:"Define Electric Flux and write its S.I. unit.\n\n💡 Hint: Φ = E·A·cosθ, unit: Nm²C⁻¹" },
+    { id:"s3",  kind:"logic", headline:"Short Answer Q3 (3 Marks)", body:"What do you mean by Quantization of Charge?\n\n💡 Hint: Q = ne, e = 1.6×10⁻¹⁹ C, n = integer" },
+    { id:"s4",  kind:"logic", headline:"Short Answer Q4 (3 Marks)", body:"State any two properties of Electric Lines of Force.\n\n💡 Hint: Start +ve end −ve, never intersect, etc." },
+    { id:"s5",  kind:"logic", headline:"Short Answer Q5 (3 Marks)", body:"Define Electrostatic Shielding and give one practical example.\n\n💡 Hint: Faraday cage, car interior during lightning" },
+    { id:"s6",  kind:"logic", headline:"Short Answer Q6 (3 Marks)", body:"State and explain the Principle of Superposition of charges.\n\n💡 Hint: F = F₁₂ + F₁₃ + ... (vector sum)" },
+    { id:"s7",  kind:"logic", headline:"Short Answer Q7 (3 Marks)", body:"Why do two electric field lines never intersect each other?\n\n💡 Hint: Two directions of E at one point — impossible" },
+    { id:"s8",  kind:"logic", headline:"Short Answer Q8 (3 Marks)", body:"Define Dielectric Strength and Permittivity of a medium.\n\n💡 Hint: Max field before breakdown; ε = ε₀ × εr" },
+    { id:"s9",  kind:"logic", headline:"Short Answer Q9 (3 Marks)", body:"Define Electric Dipole Moment and write its S.I. unit.\n\n💡 Hint: p = q × 2l, unit C·m, direction: −q to +q" },
+    { id:"s10", kind:"logic", headline:"Short Answer Q10 (3 Marks)", body:"State Gauss's Theorem of Electrostatics.\n\n💡 Hint: Φ = Q_enc / ε₀ — write full statement + formula" }
+  ];
+
+  const items       = [...mcqData, ...subjectiveData];
   const mcqItems    = items.filter(it=>it.kind==="mcq");
   const logicItems  = items.filter(it=>it.kind==="logic");
   const mcqQuestions= mcqItems.map(it=>({id:it.id,question:it.mcqTitle,options:it.options,correctOption:it.correctOption}));
@@ -187,23 +204,23 @@
   let sessionId  = params.get("session")||localStorage.getItem(SESSION_KEY)||"";
   if(!sessionId) sessionId=`fallback_${Date.now()}`;
   localStorage.setItem(SESSION_KEY,sessionId);
-  const storageKey=ANSWER_KEY_PFX+sessionId;
+  const storageKey = ANSWER_KEY_PFX+sessionId;
 
   let mcqIdx=0, logIdx=0, activeSection="mcq";
   let state={ sessionId, mcqQuestions, answers:{} };
   let focusLossReported=false;
 
-  function loadState(){ const raw=localStorage.getItem(storageKey); if(!raw)return; try{ const p=JSON.parse(raw); if(p&&p.answers)state.answers=p.answers||{}; }catch{} }
+  function loadState(){ const raw=localStorage.getItem(storageKey); if(!raw)return; try{const p=JSON.parse(raw);if(p&&p.answers)state.answers=p.answers||{};}catch{} }
   function persist(){ localStorage.setItem(storageKey,JSON.stringify({sessionId:state.sessionId,questions:state.mcqQuestions,answers:state.answers,updatedAt:new Date().toISOString()})); document.getElementById("hint").textContent=`Saved ${new Date().toLocaleTimeString()}`; }
   function esc(t){ return String(t).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;"); }
 
   function renderQ(){
     const meta=document.getElementById("metaText");
-    const qEl =document.getElementById("qText");
-    const oEl =document.getElementById("optsBox");
+    const qEl=document.getElementById("qText");
+    const oEl=document.getElementById("optsBox");
     if(activeSection==="mcq"){
       const it=mcqItems[mcqIdx]; if(!it)return;
-      meta.textContent=`MCQ ${mcqIdx+1} of ${mcqItems.length}`;
+      meta.textContent=`MCQ ${mcqIdx+1} of ${mcqItems.length}  [1 mark each]`;
       qEl.textContent=it.mcqTitle;
       const sel=state.answers[it.id]||"";
       oEl.innerHTML=Object.entries(it.options).map(([k,v])=>
@@ -211,9 +228,12 @@
       ).join("");
     } else {
       const it=logicItems[logIdx]; if(!it)return;
-      meta.textContent=`Objective ${logIdx+1} of ${logicItems.length}`;
-      qEl.textContent=it.headline;
-      oEl.innerHTML=`<div class="logic-body">${esc(it.body)}</div>`;
+      meta.textContent=`Short Answer ${logIdx+1} of ${logicItems.length}  [3 marks each]`;
+      qEl.textContent="";
+      const parts=it.body.split("\n\n");
+      const qPart=esc(parts[0]);
+      const hintPart=parts[1]?`<div style="margin-top:10px;color:#a78bfa;font-size:13px;border-top:1px solid #1e3a5f;padding-top:8px;">${esc(parts[1])}</div>`:"";
+      oEl.innerHTML=`<div class="logic-body"><h3>${esc(it.headline)}</h3><p style="font-size:clamp(15px,4vw,18px);font-weight:600;color:#e2e8f0;margin:0 0 4px;">${qPart}</p>${hintPart}<div class="marks-note">📝 Answer exam copy me likhein.</div></div>`;
     }
   }
 
@@ -221,10 +241,10 @@
     const pal=document.getElementById("mcqPal"); pal.innerHTML="";
     mcqItems.forEach((q,i)=>{
       const b=document.createElement("button"); b.type="button"; b.className="pill";
-      if(state.answers[q.id]) b.classList.add("answered");
-      if(activeSection==="mcq"&&i===mcqIdx) b.classList.add("am");
+      if(state.answers[q.id])b.classList.add("answered");
+      if(activeSection==="mcq"&&i===mcqIdx)b.classList.add("am");
       b.textContent=String(i+1);
-      b.addEventListener("click",()=>{ mcqIdx=i; activeSection="mcq"; render(); });
+      b.addEventListener("click",()=>{mcqIdx=i;activeSection="mcq";render();});
       pal.appendChild(b);
     });
     document.getElementById("mLabel").textContent=mcqItems.length?`${mcqIdx+1}/${mcqItems.length}`:"—";
@@ -236,9 +256,9 @@
     const pal=document.getElementById("logPal"); pal.innerHTML="";
     logicItems.forEach((q,i)=>{
       const b=document.createElement("button"); b.type="button"; b.className="pill";
-      if(activeSection==="logic"&&i===logIdx) b.classList.add("al");
+      if(activeSection==="logic"&&i===logIdx)b.classList.add("al");
       b.textContent=String(i+1);
-      b.addEventListener("click",()=>{ logIdx=i; activeSection="logic"; render(); });
+      b.addEventListener("click",()=>{logIdx=i;activeSection="logic";render();});
       pal.appendChild(b);
     });
     const has=logicItems.length>0;
@@ -257,10 +277,25 @@
     };
   }
 
+  function isLandscape(){
+    // portrait check: height > width
+    const vp=currentViewport();
+    return vp.width > vp.height;
+  }
+
   function updateSizeBlocker(){
     const vp=currentViewport();
-    const tooSmall=vp.width<MIN_EXAM_WIDTH || vp.height<MIN_EXAM_HEIGHT;
+    // landscape me rotate blocker handle kar raha hai, yahan sirf portrait-too-small check
+    const portrait=vp.height>=vp.width;
+    const tooSmall=portrait&&(vp.width<MIN_EXAM_WIDTH||vp.height<MIN_EXAM_HEIGHT);
     document.getElementById("sizeBlocker").classList.toggle("show",tooSmall);
+  }
+
+  // Rotation detect karo — CSS media query se handle ho raha hai but JS se bhi ensure karo
+  function checkOrientation(){
+    const vp=currentViewport();
+    const landscape=vp.width>vp.height&&vp.height<500;
+    document.getElementById("rotateBlocker").style.display=landscape?"flex":"";
   }
 
   document.getElementById("optsBox").addEventListener("change",e=>{
@@ -281,25 +316,14 @@
   function postToParent(msg){
     if(window.parent&&window.parent!==window) window.parent.postMessage(msg,"*");
   }
+  window.addEventListener("blur",()=>{ if(focusLossReported)return; focusLossReported=true; postToParent("exam_focus_lost"); });
+  window.addEventListener("focus",()=>{ if(focusLossReported){ focusLossReported=false; postToParent("exam_focus_returned"); } });
 
-  window.addEventListener("blur",()=>{
-    if(focusLossReported)return;
-    focusLossReported=true;
-    postToParent("exam_focus_lost");
-  });
+  window.addEventListener("resize",()=>{ updateSizeBlocker(); checkOrientation(); });
+  window.addEventListener("orientationchange",()=>setTimeout(()=>{ updateSizeBlocker(); checkOrientation(); },300));
+  if(window.visualViewport) window.visualViewport.addEventListener("resize",()=>{ updateSizeBlocker(); checkOrientation(); });
 
-  window.addEventListener("focus",()=>{
-    if(focusLossReported){
-      focusLossReported=false;
-      postToParent("exam_focus_returned");
-    }
-  });
-
-  window.addEventListener("resize",updateSizeBlocker);
-  window.addEventListener("orientationchange",()=>setTimeout(updateSizeBlocker,250));
-  if(window.visualViewport) window.visualViewport.addEventListener("resize",updateSizeBlocker);
-
-  loadState(); persist(); render(); updateSizeBlocker();
+  loadState(); persist(); render(); updateSizeBlocker(); checkOrientation();
 </script>
 </body>
 </html>
