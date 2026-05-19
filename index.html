@@ -231,8 +231,8 @@
       active:"exam_active_session", answersPrefix:"exam_answers_",
       reportPrefix:"exam_report_", reportLinks:"exam_temp_links"
     };
-    const MIN_EXAM_WIDTH = 360;
-    const MIN_EXAM_HEIGHT = 620;
+    const MIN_EXAM_WIDTH = 320;
+    const MIN_EXAM_HEIGHT = 480;
     const MIN_INACTIVE_SESSION_MS = 500;
 
     const ANSWER_EXPLANATIONS = {
@@ -598,7 +598,12 @@ li:last-child{border-bottom:none}
     const pwOkBtn     = document.getElementById("pwOkBtn");
     const pwCancelBtn = document.getElementById("pwCancelBtn");
 
+    // In-memory flag — refresh hone par reset hoga, cancel pe nahi
+    let pwVerified = false;
+
     function showPasswordModal(){
+      // Already verified hai to seedha start karo
+      if(pwVerified){ startExam(); return; }
       pwInput.value=""; pwError.textContent="";
       pwModalWrap.classList.add("show");
       setTimeout(()=>pwInput.focus(),100);
@@ -611,6 +616,7 @@ li:last-child{border-bottom:none}
         pwError.textContent="❌ Galat password! Teacher se confirm karein.";
         pwInput.value=""; pwInput.focus(); return;
       }
+      pwVerified=true;       // memory me save — tab band/refresh tak rahega
       hidePasswordModal();
       startExam();
     }
