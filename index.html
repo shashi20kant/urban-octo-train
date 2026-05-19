@@ -235,6 +235,7 @@
     let viewportWasTooSmall=false;
     let fullscreenWasOn=false;
     let examViewportBase=null, systemUiRevealTimer=null, systemUiWasRevealed=false;
+    let parentFocusLost=false, focusPollInt=null;
 
     const report = {
       timezone  : Intl.DateTimeFormat().resolvedOptions().timeZone||"Unknown",
@@ -312,6 +313,22 @@
 
     function markInactiveStart(reason){ if(!examRunning||submitted||inactiveStartMs)return; inactiveStartMs=Date.now(); addEvent("inactive_start_page_hidden",{reason}); }
     function markInactiveEnd(reason){ if(!examRunning||submitted||!inactiveStartMs)return; const end=Date.now(),ms=end-inactiveStartMs; report.inactiveSessions.push({leftAtIso:new Date(inactiveStartMs).toISOString(),returnedAtIso:new Date(end).toISOString(),awayMs:ms}); report.summary.totalInactiveMs+=ms; inactiveStartMs=0; addEvent("inactive_end_page_visible",{reason,awaySeconds:Math.round(ms/1000)}); }
+    function startParentFocusLoss(reason){
+      if(!examRunning||submitted||parentFocusLost)return;
+      parentFocusLost=true;
+      markInactiveStart(reason);
+    }
+    function endParentFocusLoss(reason){
+      if(parentFocusLost){
+        parentFocusLost=false;
+        markInactiveEnd(reason);
+      }
+    }
+    function checkParentFocus(){
+      if(!examRunning||submitted)return;
+      if(document.hasFocus()) endParentFocusLoss("page_focus_returned");
+      else startParentFocusLoss("page_focus_lost_possible_overlay");
+    }
     function handleViewportChange(){
       const tooSmall=isExamViewportTooSmall();
       if(examRunning&&!submitted&&tooSmall!==viewportWasTooSmall){
@@ -518,6 +535,8 @@ li:last-child{border-bottom:none}
       const endTs=startAtMs+EXAM_SECONDS*1000;
       if(timerInt)clearInterval(timerInt);
       timerInt=setInterval(()=>{ const rem=Math.ceil((endTs-Date.now())/1000); timerEl.textContent=mmss(rem); timerBox.classList.toggle("timer-warn",rem>0&&rem<=10*60); if(rem<=0){clearInterval(timerInt);timerEl.textContent="00:00";} },300);
+      if(focusPollInt)clearInterval(focusPollInt);
+      focusPollInt=setInterval(checkParentFocus,250);
     }
 
     function submitExam(reason="manual"){
@@ -525,6 +544,7 @@ li:last-child{border-bottom:none}
       submitted=true; examRunning=false; submitAtMs=Date.now();
       if(inactiveStartMs)markInactiveEnd("submit_flush");
       if(timerInt)clearInterval(timerInt);
+      if(focusPollInt){ clearInterval(focusPollInt); focusPollInt=null; }
       if(document.fullscreenElement&&document.exitFullscreen)document.exitFullscreen().catch(()=>{});
       report.exam.submitAt=new Date(submitAtMs).toISOString(); report.exam.submitReason=reason;
       addEvent("exam_submitted",{reason}); computeResult(); saveDraft(); exitExamOnlyView();
@@ -574,6 +594,8 @@ li:last-child{border-bottom:none}
     document.addEventListener("visibilitychange",()=>{ if(!examRunning||submitted)return; if(document.visibilityState==="hidden")markInactiveStart("visibility_hidden_background"); if(document.visibilityState==="visible")markInactiveEnd("visibility_visible_foreground"); });
     window.addEventListener("pagehide",()=>{ if(examRunning&&!submitted)markInactiveStart("pagehide_navigation"); });
     window.addEventListener("pageshow",e=>{ if(examRunning&&!submitted&&!e.persisted)markInactiveEnd("pageshow_back"); });
+    window.addEventListener("blur",()=>startParentFocusLoss("page_blur_possible_overlay"));
+    window.addEventListener("focus",()=>endParentFocusLoss("page_focus_returned"));
     window.addEventListener("resize",handleViewportChange);
     window.addEventListener("orientationchange",()=>setTimeout(handleViewportChange,250));
     if(window.visualViewport) window.visualViewport.addEventListener("resize",handleViewportChange);
