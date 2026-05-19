@@ -337,8 +337,19 @@
 
     function updateStartGateUi(){
       if(examRunning)return;
-      if(isExamViewportTooSmall()){examBtn.disabled=true;startGateLine.textContent=viewportGateMessage();return;}
-      if(isStartGateOpen()){examBtn.disabled=false;startGateLine.textContent="";if(gateTimerInt)clearInterval(gateTimerInt);gateTimerInt=null;return;}
+      if(isExamViewportTooSmall()){
+        examBtn.disabled=true;
+        startGateLine.textContent=viewportGateMessage();
+        return;
+      }
+      // Screen theek hai — message clear karo, button enable karo
+      startGateLine.textContent="";
+      if(isStartGateOpen()){
+        examBtn.disabled=false;
+        if(gateTimerInt)clearInterval(gateTimerInt);
+        gateTimerInt=null;
+        return;
+      }
       examBtn.disabled=true;
       const rem=Math.max(0,Math.ceil((todayGateMs()-Date.now())/1000));
       startGateLine.textContent=`Locked — opens in ~${Math.floor(rem/3600)}h ${Math.floor((rem%3600)/60)}m`;
@@ -409,7 +420,15 @@
       const awayLines=report.inactiveSessions.map((s,i)=>
         `${i+1}. Gaye: ${fmtTime(s.leftAtIso)} | Aaye: ${fmtTime(s.returnedAtIso)} | ${fmtDur(s.awayMs)}`
       );
-      return{name:report.studentName,dateStr:fmtDate(iso),examSpan:`${fmtDate(report.exam.startAt)} → ${fmtDate(report.exam.submitAt)} (${fmtDur(durMs)})`,awayLines,machineReport:report};
+      return{
+        name:report.studentName,
+        dateStr:fmtDate(iso),
+        startTimeStr: report.exam.startAt ? fmtDate(report.exam.startAt) : "—",
+        submitTimeStr: report.exam.submitAt ? fmtTime(report.exam.submitAt) : "—",
+        durationStr: durMs>0 ? fmtDur(durMs) : "—",
+        examSpan:`${fmtDate(report.exam.startAt)} → ${fmtDate(report.exam.submitAt)} (${fmtDur(durMs)})`,
+        awayLines,machineReport:report
+      };
     }
 
     function buildReportHtmlBody(d,{includeAwayRecord=true}={}){
@@ -444,7 +463,7 @@
       <div class="report-header">
         <div class="rh-name">${esc(d.name)}</div>
         <div class="rh-sub">Physics — Electrostatics &nbsp;|&nbsp; Exam Report</div>
-        <div class="rh-date">${esc(d.dateStr)}</div>
+        <div class="rh-date">${esc(d.startTimeStr)} &nbsp;—&nbsp; ${esc(d.submitTimeStr)} &nbsp;(${esc(d.durationStr)})</div>
       </div>
 
       <div class="section">
@@ -483,6 +502,9 @@ body{font-family:Arial,sans-serif;margin:0;padding:16px;background:#0b1220;color
 .rh-name{font-size:clamp(20px,5vw,28px);font-weight:700;background:linear-gradient(90deg,#34d399,#22d3ee,#a78bfa,#fb7185);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .rh-sub{font-size:14px;color:#7dd3fc;margin-top:4px;font-weight:600}
 .rh-date{font-size:13px;color:#64748b;margin-top:2px}
+.rh-timing{display:flex;flex-wrap:wrap;justify-content:center;gap:6px 14px;margin-top:8px;font-size:13px;color:#94a3b8}
+.rt-item b{color:#e2e8f0}
+.rt-sep{color:#334155}
 .section{margin-bottom:22px}
 .sec-head{font-size:16px;font-weight:700;color:#93c5fd;border-bottom:1px solid #1e3a5f;padding-bottom:6px;margin-bottom:10px}
 .summary-grid{background:#0d1f38;border-radius:10px;padding:12px 14px}
@@ -537,7 +559,7 @@ li:last-child{border-bottom:none}
         return `Q${i+1}. ${s.question} [${st}]\n${opts}${exp}`;
       }).join("\n\n");
       const awayBlock=includeAwayRecord?`\n\nBAHAR JANE KA RECORD\n${away}`:"";
-      return `EXAM REPORT — Physics: Electrostatics\n${"=".repeat(52)}\nStudent : ${d.name}\nDate    : ${d.dateStr}\nDuration: ${d.examSpan}\n\n--- MCQ SCORE (20 marks) ---\nTotal: ${r.totalQuestions} | Attempt: ${r.attempted} | Skip: ${r.unattempted}\nSahi ✔: ${r.correct} | Galat ✘: ${r.wrong}\nBase: ${r.baseScore} | Negative: −${r.negativeMarks} | Final MCQ: ${r.finalScore}/20${awayBlock}\n\n--- MCQ QUESTIONS & ANSWERS ---\n${"=".repeat(52)}\n${qtext}`;
+      return `EXAM REPORT — Physics: Electrostatics\n${"=".repeat(52)}\nStudent  : ${d.name}\nStart    : ${d.startTimeStr}\nSubmit   : ${d.submitTimeStr}\nDuration : ${d.durationStr}\n\n--- MCQ SCORE (20 marks) ---\nTotal: ${r.totalQuestions} | Attempt: ${r.attempted} | Skip: ${r.unattempted}\nSahi ✔: ${r.correct} | Galat ✘: ${r.wrong}\nBase: ${r.baseScore} | Negative: −${r.negativeMarks} | Final MCQ: ${r.finalScore}/20${awayBlock}\n\n--- MCQ QUESTIONS & ANSWERS ---\n${"=".repeat(52)}\n${qtext}`;
     }
 
     function download(name,content,type){const url=URL.createObjectURL(new Blob([content],{type}));const a=document.createElement("a");a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);}
@@ -612,7 +634,7 @@ li:last-child{border-bottom:none}
     function confirmPassword(){
       const val=pwInput.value.trim();
       if(!val){ pwError.textContent="Password khali nahi ho sakta."; return; }
-      if(val!==EXAM_PASSWORD){
+      if(val.toLowerCase()!==EXAM_PASSWORD.toLowerCase()){
         pwError.textContent="❌ Galat password! Teacher se confirm karein.";
         pwInput.value=""; pwInput.focus(); return;
       }
