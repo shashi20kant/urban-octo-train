@@ -1,1 +1,305 @@
 
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Exam Questions</title>
+  <style>
+    :root{ --bg:#020617;--line:#334155;--text:#e2e8f0;--muted:#94a3b8;--acc:#22d3ee;--acc2:#a78bfa; }
+    *{ box-sizing:border-box; }
+    html,body{
+      margin:0; width:100%; height:100%;
+      overflow:hidden; overscroll-behavior:none;
+      font-family:Arial,sans-serif; background:var(--bg); color:var(--text);
+    }
+
+    /* Shell — flex column, no scroll */
+    .shell{
+      height:100vh;
+      height:100dvh;
+      min-height:0;
+      display:flex; flex-direction:column;
+      overflow:hidden;
+    }
+
+    /* Question area — scrolls internally if text overflows */
+    .q-area{
+      flex:1 1 auto; min-height:0;
+      overflow-y:auto;
+      -webkit-overflow-scrolling:touch;
+      padding:12px 14px 8px;
+    }
+    .meta{ color:var(--muted); font-size:clamp(12px,3vw,14px); margin-bottom:6px; }
+    .q-text{
+      font-size:clamp(17px,4.5vw,22px);
+      margin:0 0 10px; line-height:1.45; font-weight:600;
+    }
+    .opt{
+      border:1px solid var(--line); border-radius:10px;
+      padding:12px 14px; margin-bottom:9px;
+      display:flex; gap:10px; align-items:center; cursor:pointer;
+      font-size:clamp(14px,3.8vw,17px); line-height:1.4;
+      transition:border-color .15s;
+    }
+    .opt:hover{ border-color:var(--acc); }
+    .opt input[type=radio]{ accent-color:var(--acc); flex-shrink:0; width:18px; height:18px; }
+    .logic-body{
+      border:1px solid #33507e; border-radius:10px; padding:14px;
+      background:#0b162b; color:#dbeafe; line-height:1.6;
+      font-size:clamp(14px,3.8vw,17px);
+    }
+
+    /* Controls — normal flow at bottom.
+       NOT fixed — on split screen small windows they get cut off naturally (intentional). */
+    .ctrl{
+      flex:0 0 auto;
+      background:#020617;
+      border-top:1px solid #1e2d45;
+      padding:8px 12px 10px;
+    }
+    .pal-label{
+      font-size:clamp(11px,2.8vw,13px); color:var(--muted); margin-bottom:4px; font-weight:600;
+    }
+    .palette{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom:6px; }
+    .pill{
+      width:clamp(32px,8vw,40px); height:clamp(32px,8vw,40px);
+      border-radius:50%; border:1px solid var(--line);
+      background:#1e293b; color:#cbd5e1; cursor:pointer; font-weight:700;
+      font-size:clamp(12px,3.2vw,15px);
+      display:flex; align-items:center; justify-content:center; padding:0;
+    }
+    .pill.am{ outline:2px solid var(--acc); outline-offset:1px; }
+    .pill.al{ outline:2px solid var(--acc2); outline-offset:1px; }
+    .pill.answered{ background:#14532d; border-color:#22c55e; color:#86efac; }
+    .nav-row{
+      display:flex; gap:7px; align-items:center;
+      justify-content:center; margin-bottom:5px;
+    }
+    .nlabel{ font-size:clamp(11px,3vw,13px); color:var(--muted); min-width:44px; text-align:center; }
+    button{
+      border:0; border-radius:9px; cursor:pointer;
+      padding:clamp(8px,2.5vw,11px) clamp(12px,3.5vw,18px);
+      font-weight:700; font-size:clamp(13px,3.5vw,16px);
+      background:#334155; color:#f1f5f9;
+    }
+    button:disabled{ opacity:0.35; cursor:not-allowed; }
+    .sbtn{
+      background:linear-gradient(135deg,#16a34a,#15803d,#059669);
+      color:#fff;
+      box-shadow:0 3px 12px rgba(22,163,74,.35);
+      padding:clamp(8px,2.5vw,11px) clamp(16px,4vw,24px);
+    }
+    .sbtn:active{ opacity:.85; }
+    .divider{ border:none; border-top:1px solid #1e2d45; margin:5px 0; }
+    .hint{ color:#86efac; font-size:clamp(10px,2.5vw,12px); min-height:14px; text-align:center; margin-top:2px; }
+    .size-blocker{
+      position:fixed; inset:0; z-index:99999;
+      display:none; align-items:center; justify-content:center;
+      padding:18px; text-align:center;
+      background:#020617; color:#e2e8f0;
+    }
+    .size-blocker.show{ display:flex; }
+    .size-box{
+      max-width:420px; border:1px solid #334155; border-radius:12px;
+      background:#0b162b; padding:18px; box-shadow:0 10px 30px rgba(0,0,0,.35);
+    }
+    .size-box strong{ display:block; margin-bottom:8px; color:#fda4af; font-size:18px; }
+    .size-box span{ color:#cbd5e1; line-height:1.55; font-size:14px; }
+  </style>
+</head>
+<body>
+<div class="shell">
+  <!-- Scrollable question -->
+  <div class="q-area">
+    <div class="meta" id="metaText"></div>
+    <div class="q-text" id="qText"></div>
+    <div id="optsBox"></div>
+  </div>
+
+  <!-- Controls — natural flow, cut off on very small/split screens intentionally -->
+  <div class="ctrl">
+    <div class="pal-label">MCQ Questions</div>
+    <div class="palette" id="mcqPal"></div>
+    <div class="nav-row">
+      <button id="mp">&#8592; Back</button>
+      <span class="nlabel" id="mLabel">—</span>
+      <button id="mn">Next &#8594;</button>
+    </div>
+    <hr class="divider">
+    <div class="pal-label">Objective / Reading</div>
+    <div class="palette" id="logPal"></div>
+    <div class="nav-row">
+      <button id="lp">&#8592; Back</button>
+      <span class="nlabel" id="lLabel">—</span>
+      <button id="ln">Next &#8594;</button>
+      <button class="sbtn" id="subBtn">Submit Exam</button>
+    </div>
+    <div class="hint" id="hint"></div>
+  </div>
+</div>
+<div class="size-blocker" id="sizeBlocker" aria-live="polite">
+  <div class="size-box">
+    <strong>Screen size bahut chhota hai</strong>
+    <span>Exam content tabhi dikhega jab window normal size me ho. Split screen band karke ya browser area bada karke wapas aaiye.</span>
+  </div>
+</div>
+
+<script>
+  const SESSION_KEY    = "exam_active_session";
+  const ANSWER_KEY_PFX = "exam_answers_";
+  const MIN_EXAM_WIDTH = 360;
+  const MIN_EXAM_HEIGHT = 620;
+
+  // ── QUESTIONS ──
+  // kind: "mcq" = MCQ only | "logic" = reading/objective only
+  const items = [
+    {
+      id:"s1", kind:"logic",
+      headline:"Objective 1 — Reading",
+      body:"Yeh sirf padaav hai. Ye objective MCQ me count nahi hoga."
+    },
+    {
+      id:"h2", kind:"mcq",
+      mcqTitle:"Web page par external JS ka sahi tarika?",
+      options:{ A:"<script src='app.js'><\/script>", B:"<javascript src='app.js'>", C:"<js href='app.js'>", D:"<link rel='script' href='app.js'>" },
+      correctOption:"A"
+    },
+    {
+      id:"m3", kind:"mcq",
+      mcqTitle:"CSS me text rang set karne waala property?",
+      options:{ A:"font-style", B:"text-color", C:"color", D:"font-color" },
+      correctOption:"C"
+    },
+    {
+      id:"h4", kind:"mcq",
+      mcqTitle:"HTML ka poora naam?",
+      options:{ A:"Hyper Text Markup Language", B:"High Tool Markup Language", C:"Hyper Tab Mark Language", D:"Home Text Model Language" },
+      correctOption:"A"
+    }
+  ];
+
+  const mcqItems    = items.filter(it=>it.kind==="mcq");
+  const logicItems  = items.filter(it=>it.kind==="logic");
+  const mcqQuestions= mcqItems.map(it=>({id:it.id,question:it.mcqTitle,options:it.options,correctOption:it.correctOption}));
+
+  const params   = new URLSearchParams(window.location.search);
+  let sessionId  = params.get("session")||localStorage.getItem(SESSION_KEY)||"";
+  if(!sessionId) sessionId=`fallback_${Date.now()}`;
+  localStorage.setItem(SESSION_KEY,sessionId);
+  const storageKey=ANSWER_KEY_PFX+sessionId;
+
+  let mcqIdx=0, logIdx=0, activeSection="mcq";
+  let state={ sessionId, mcqQuestions, answers:{} };
+  let focusLossReported=false;
+
+  function loadState(){ const raw=localStorage.getItem(storageKey); if(!raw)return; try{ const p=JSON.parse(raw); if(p&&p.answers)state.answers=p.answers||{}; }catch{} }
+  function persist(){ localStorage.setItem(storageKey,JSON.stringify({sessionId:state.sessionId,questions:state.mcqQuestions,answers:state.answers,updatedAt:new Date().toISOString()})); document.getElementById("hint").textContent=`Saved ${new Date().toLocaleTimeString()}`; }
+  function esc(t){ return String(t).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;"); }
+
+  function renderQ(){
+    const meta=document.getElementById("metaText");
+    const qEl =document.getElementById("qText");
+    const oEl =document.getElementById("optsBox");
+    if(activeSection==="mcq"){
+      const it=mcqItems[mcqIdx]; if(!it)return;
+      meta.textContent=`MCQ ${mcqIdx+1} of ${mcqItems.length}`;
+      qEl.textContent=it.mcqTitle;
+      const sel=state.answers[it.id]||"";
+      oEl.innerHTML=Object.entries(it.options).map(([k,v])=>
+        `<label class="opt"><input type="radio" name="ans" value="${k}" ${k===sel?"checked":""}><strong>${esc(k)}.</strong><span>${esc(v)}</span></label>`
+      ).join("");
+    } else {
+      const it=logicItems[logIdx]; if(!it)return;
+      meta.textContent=`Objective ${logIdx+1} of ${logicItems.length}`;
+      qEl.textContent=it.headline;
+      oEl.innerHTML=`<div class="logic-body">${esc(it.body)}</div>`;
+    }
+  }
+
+  function renderMcqPal(){
+    const pal=document.getElementById("mcqPal"); pal.innerHTML="";
+    mcqItems.forEach((q,i)=>{
+      const b=document.createElement("button"); b.type="button"; b.className="pill";
+      if(state.answers[q.id]) b.classList.add("answered");
+      if(activeSection==="mcq"&&i===mcqIdx) b.classList.add("am");
+      b.textContent=String(i+1);
+      b.addEventListener("click",()=>{ mcqIdx=i; activeSection="mcq"; render(); });
+      pal.appendChild(b);
+    });
+    document.getElementById("mLabel").textContent=mcqItems.length?`${mcqIdx+1}/${mcqItems.length}`:"—";
+    document.getElementById("mp").disabled=mcqIdx===0;
+    document.getElementById("mn").disabled=mcqIdx===mcqItems.length-1;
+  }
+
+  function renderLogPal(){
+    const pal=document.getElementById("logPal"); pal.innerHTML="";
+    logicItems.forEach((q,i)=>{
+      const b=document.createElement("button"); b.type="button"; b.className="pill";
+      if(activeSection==="logic"&&i===logIdx) b.classList.add("al");
+      b.textContent=String(i+1);
+      b.addEventListener("click",()=>{ logIdx=i; activeSection="logic"; render(); });
+      pal.appendChild(b);
+    });
+    const has=logicItems.length>0;
+    document.getElementById("lLabel").textContent=has?`${logIdx+1}/${logicItems.length}`:"—";
+    document.getElementById("lp").disabled=!has||logIdx===0;
+    document.getElementById("ln").disabled=!has||logIdx===logicItems.length-1;
+  }
+
+  function render(){ renderQ(); renderMcqPal(); renderLogPal(); }
+
+  function currentViewport(){
+    const vv=window.visualViewport;
+    return {
+      width:Math.round((vv&&vv.width)||window.innerWidth||document.documentElement.clientWidth||0),
+      height:Math.round((vv&&vv.height)||window.innerHeight||document.documentElement.clientHeight||0)
+    };
+  }
+
+  function updateSizeBlocker(){
+    const vp=currentViewport();
+    const tooSmall=vp.width<MIN_EXAM_WIDTH || vp.height<MIN_EXAM_HEIGHT;
+    document.getElementById("sizeBlocker").classList.toggle("show",tooSmall);
+  }
+
+  document.getElementById("optsBox").addEventListener("change",e=>{
+    if(!e.target||e.target.name!=="ans"||activeSection!=="mcq")return;
+    const it=mcqItems[mcqIdx]; if(!it)return;
+    state.answers[it.id]=e.target.value; persist(); renderMcqPal();
+  });
+
+  document.getElementById("mp").addEventListener("click",()=>{ if(mcqIdx>0){mcqIdx--;activeSection="mcq";render();} });
+  document.getElementById("mn").addEventListener("click",()=>{ if(mcqIdx<mcqItems.length-1){mcqIdx++;activeSection="mcq";render();} });
+  document.getElementById("lp").addEventListener("click",()=>{ if(logIdx>0){logIdx--;activeSection="logic";render();} });
+  document.getElementById("ln").addEventListener("click",()=>{ if(logIdx<logicItems.length-1){logIdx++;activeSection="logic";render();} });
+
+  document.getElementById("subBtn").addEventListener("click",()=>{
+    if(window.parent&&window.parent!==window) window.parent.postMessage("submit_exam","*");
+  });
+
+  function postToParent(msg){
+    if(window.parent&&window.parent!==window) window.parent.postMessage(msg,"*");
+  }
+
+  window.addEventListener("blur",()=>{
+    if(focusLossReported)return;
+    focusLossReported=true;
+    postToParent("exam_focus_lost");
+  });
+
+  window.addEventListener("focus",()=>{
+    if(focusLossReported){
+      focusLossReported=false;
+      postToParent("exam_focus_returned");
+    }
+  });
+
+  window.addEventListener("resize",updateSizeBlocker);
+  window.addEventListener("orientationchange",()=>setTimeout(updateSizeBlocker,250));
+  if(window.visualViewport) window.visualViewport.addEventListener("resize",updateSizeBlocker);
+
+  loadState(); persist(); render(); updateSizeBlocker();
+</script>
+</body>
+</html>
