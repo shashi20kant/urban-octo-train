@@ -601,7 +601,7 @@ li:last-child{border-bottom:none}
       if(focusPollInt){clearInterval(focusPollInt);focusPollInt=null;}
       if(document.fullscreenElement&&document.exitFullscreen)document.exitFullscreen().catch(()=>{});
       report.exam.submitAt=new Date(submitAtMs).toISOString();report.exam.submitReason=reason;
-      addEvent("exam_submitted",{reason});computeResult();saveDraft();exitExamOnlyView();
+      addEvent("exam_submitted",{reason});computeResult();saveDraft();startGateLine.textContent = "";exitExamOnlyView();
       examBtn.disabled=false;examBtn.textContent="Start Exam";
       setStatus("Submit ho gayi.","ok");shareModalWrap.classList.add("show");
       renderSnapshot();updateStartGateUi();
@@ -632,6 +632,7 @@ li:last-child{border-bottom:none}
     return;  // password modal nahi khulega
   }
       // Already verified hai to seedha start karo
+      startGateLine.textContent = "";
       if(pwVerified){ startExam(); return; }
       pwInput.value=""; pwError.textContent="";
       pwModalWrap.classList.add("show");
