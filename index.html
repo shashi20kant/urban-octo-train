@@ -14,12 +14,10 @@
     body.pre-exam{overflow-y:auto;-webkit-overflow-scrolling:touch}
     body.in-exam{overflow:hidden;position:fixed;width:100%;height:100%}
 
-    /* ── Name Modal ── */
     #nameModalWrap{
       position:fixed;inset:0;z-index:20000;
       display:flex;align-items:center;justify-content:center;
-      background:linear-gradient(135deg,#060b16,#0b1220,#111a2d);
-      padding:20px;
+      background:linear-gradient(135deg,#060b16,#0b1220,#111a2d);padding:20px;
     }
     #nameModal{
       background:rgba(18,26,43,.98);border:1px solid #2b3b5e;
@@ -35,8 +33,7 @@
     #nameInput{
       width:100%;padding:14px 16px;border-radius:12px;border:2px solid #2b3b5e;
       background:#0d1829;color:#e6eeff;font-size:clamp(15px,4vw,18px);font-weight:600;
-      text-align:center;outline:none;letter-spacing:1px;
-      transition:border-color .2s;
+      text-align:center;outline:none;letter-spacing:1px;transition:border-color .2s;
     }
     #nameInput:focus{border-color:#34d399}
     #nameInput::placeholder{color:#4a5f82;font-weight:400;letter-spacing:0}
@@ -45,27 +42,32 @@
       margin-top:18px;width:100%;padding:15px;border:none;border-radius:12px;cursor:pointer;
       font-size:clamp(15px,4vw,18px);font-weight:700;color:#fff;
       background:linear-gradient(135deg,#34d399,#059669);
-      box-shadow:0 4px 18px rgba(52,211,153,.35);
-      transition:opacity .15s;
+      box-shadow:0 4px 18px rgba(52,211,153,.35);transition:opacity .15s;
     }
     #nameOkBtn:active{opacity:.85}
 
-    /* ── Welcome name banner ── */
+    /* Naam LEFT, Subject CENTER */
     #welcomeBanner{
-      text-align:center;padding:14px 10px 4px;
-      font-size:clamp(18px,5vw,26px);font-weight:700;letter-spacing:1px;
+      text-align:left;padding:14px 14px 2px;
+      font-size:clamp(16px,4.5vw,22px);font-weight:700;
     }
     #welcomeName{
       background:linear-gradient(90deg,#34d399,#22d3ee,#a78bfa,#fb7185);
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+    }
+    #subjectTitle{
+      text-align:center;padding:2px 10px 10px;
+      font-size:clamp(14px,3.8vw,19px);font-weight:700;letter-spacing:.5px;
+      background:linear-gradient(90deg,#22d3ee,#a78bfa);
       -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
     }
 
     .wrap{max-width:1100px;margin:0 auto;padding:0 14px 32px}
     .card{background:rgba(18,26,43,.95);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:14px}
     .hidden{display:none!important}
-    h1{margin:0 0 10px;font-size:clamp(22px,5vw,30px)}
+    h1{margin:0 0 8px;font-size:clamp(20px,5vw,28px)}
     h2{margin:0 0 10px;font-size:clamp(17px,4vw,22px)}
-    p{margin:0 0 12px;color:var(--muted);line-height:1.55;font-size:clamp(14px,3.5vw,16px)}
+    p{margin:0 0 10px;color:var(--muted);line-height:1.55;font-size:clamp(14px,3.5vw,16px)}
     .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
     button{border:0;border-radius:10px;padding:12px 18px;font-weight:700;cursor:pointer;font-size:clamp(14px,3.5vw,16px)}
     #examBtn{
@@ -78,8 +80,7 @@
     #timerBox{
       position:fixed;top:12px;right:12px;
       background:rgba(8,14,26,.96);border:1px solid #355081;border-radius:12px;
-      padding:8px 14px;display:none;z-index:9999;color:#dfe9ff;
-      width:fit-content;white-space:nowrap;
+      padding:8px 14px;display:none;z-index:9999;color:#dfe9ff;white-space:nowrap;
     }
     #timerBox.timer-warn{border-color:#f87171;color:#fecaca;background:rgba(62,17,26,.95)}
     #timer{font-size:clamp(20px,5vw,26px);letter-spacing:2px;font-weight:700}
@@ -89,7 +90,7 @@
     .ok{color:#86efac}.bad{color:#fda4af}.warn{color:#fcd34d}
     #snapshotView{
       margin:0;background:#050b17;border:1px solid #2b4a79;border-radius:10px;padding:12px;max-height:280px;
-      overflow:auto;line-height:1.5;color:#dbeafe;font-family:Consolas,"Courier New",monospace;
+      overflow:auto;line-height:1.5;color:#dbeafe;font-family:Consolas,monospace;
       font-size:clamp(11px,2.8vw,13px);white-space:pre-wrap;word-break:break-word;
     }
     #examOverlay{display:none;position:fixed;inset:0;z-index:5000;background:#040914;flex-direction:column;padding-top:74px;}
@@ -105,7 +106,6 @@
   </style>
 </head>
 <body>
-  <!-- Name Input Modal — shown first, cannot be skipped -->
   <div id="nameModalWrap">
     <div id="nameModal">
       <div class="nm-title">EXAM PORTAL</div>
@@ -132,15 +132,18 @@
     </div>
   </div>
 
-  <!-- Main page (hidden until name entered) -->
   <div id="mainPage" class="hidden">
-    <div id="welcomeBanner">
-      HI, <span id="welcomeName"></span> 👋
-    </div>
+    <div id="welcomeBanner">HI, <span id="welcomeName"></span> 👋</div>
+    <div id="subjectTitle">Physics — Electrostatics</div>
 
     <div class="wrap">
       <section id="instructionCard" class="card">
         <h2>Instructions</h2>
+        <p>
+          <strong style="color:#fbbf24">Total Marks: 50</strong> &nbsp;|&nbsp;
+          MCQ: 20 × 1 = <strong style="color:#86efac">20 Marks</strong> &nbsp;|&nbsp;
+          Short Answer: 10 × 3 = <strong style="color:#86efac">30 Marks</strong>
+        </p>
         <p>Inactive tab track hoga jab ye page background me ho — dusra app khulne par, browser tab switch karne par, ya back/recent button dabaane par. Page ke andar click karne se inactive record nahi banega.</p>
       </section>
 
@@ -186,295 +189,254 @@
     const MIN_EXAM_HEIGHT = 620;
     const MIN_INACTIVE_SESSION_MS = 500;
 
-    /* ── Name gate ── */
-    let studentName = "";
-
-    const nameModalWrap = document.getElementById("nameModalWrap");
-    const nameInput     = document.getElementById("nameInput");
-    const nameError     = document.getElementById("nameError");
-    const nameOkBtn     = document.getElementById("nameOkBtn");
-    const mainPage      = document.getElementById("mainPage");
-    const welcomeName   = document.getElementById("welcomeName");
-
-    function submitName(){
-      const raw = nameInput.value.trim();
-      if(!raw){ nameError.textContent = "Naam likhna zaroori hai — skip nahi kar sakte."; return; }
-      if(raw.length < 2){ nameError.textContent = "Kam se kam 2 akshar likhein."; return; }
-      studentName = raw.toUpperCase();
-      welcomeName.textContent = studentName;
-      nameModalWrap.style.display = "none";
-      mainPage.classList.remove("hidden");
-      document.body.classList.add("pre-exam");
-      examBtn.disabled = true;
-      updateStartGateUi();
-    }
-
-    nameOkBtn.addEventListener("click", submitName);
-    nameInput.addEventListener("keydown", e=>{ if(e.key==="Enter") submitName(); });
-    // Prevent closing modal by any other means
-    nameModalWrap.addEventListener("click", e=>{ if(e.target===nameModalWrap) nameInput.focus(); });
-
-    /* ── Exam vars ── */
-    const examBtn            = document.getElementById("examBtn");
-    const statusEl           = document.getElementById("status");
-    const timerBox           = document.getElementById("timerBox");
-    const timerEl            = document.getElementById("timer");
-    const startGateLine      = document.getElementById("startGateLine");
-    const frame              = document.getElementById("questionFrame");
-    const examOverlay        = document.getElementById("examOverlay");
-    const openPdfBtn         = document.getElementById("openPdfBtn");
-    const shareBtn           = document.getElementById("shareBtn");
-    const viewResultBtn      = document.getElementById("viewResultBtn");
-    const downloadResultBtn  = document.getElementById("downloadResultBtn");
-    const snapshotView       = document.getElementById("snapshotView");
-    const afterSubmitActions = document.getElementById("afterSubmitActions");
-    const shareModalWrap     = document.getElementById("shareModalWrap");
-    const shareModalOk       = document.getElementById("shareModalOk");
-
-    let examRunning=false, submitted=false, startAtMs=0, submitAtMs=0;
-    let inactiveStartMs=0, sid="", timerInt=null, gateTimerInt=null, reportUrl="";
-    let viewportWasTooSmall=false;
-    let fullscreenWasOn=false;
-    let examViewportBase=null, systemUiRevealTimer=null, systemUiWasRevealed=false;
-    let parentFocusLost=false, focusPollInt=null;
-
-    const report = {
-      timezone  : Intl.DateTimeFormat().resolvedOptions().timeZone||"Unknown",
-      userAgent : navigator.userAgent,
-      studentName: "",
-      exam      : { durationSeconds:EXAM_SECONDS, startAt:null, submitAt:null, submitReason:null, sessionId:null },
-      inactiveSessions:[], events:[],
-      result    : { totalQuestions:0,attempted:0,correct:0,wrong:0,unattempted:0,baseScore:0,leaveIncidentCount:0,penaltyMarks:0,finalScore:0,selections:[] },
-      summary   : { totalInactiveMs:0 }
+    const ANSWER_EXPLANATIONS = {
+      "q1" :"Electric field on conductor surface is always ⊥ (perpendicular). Tangential component = 0, else electrons would move.",
+      "q2" :"Torque τ = P × E (cross product). Magnitude = PE sinθ.",
+      "q3" :"Gauss's Law: Φ = Q/ε₀. Total flux = (1/ε₀) × charge enclosed.",
+      "q4" :"On equatorial (perpendicular bisector) line of dipole, V = 0 — +q and −q potentials cancel.",
+      "q5" :"Capacitance unit = Farad (F) = C/V. Henry = inductance, Tesla/Weber = magnetism.",
+      "q6" :"In parallel combination, all capacitors share same voltage (potential). Charge differs.",
+      "q7" :"C = ε₀εrA/d. Larger area A or inserting dielectric (εr>1) increases C.",
+      "q8" :"Coulomb force acts along line joining charges (central) and is an electric force → Both.",
+      "q9" :"εr = ε/ε₀ = 1 for air/vacuum (dimensionless).",
+      "q10":"Gauss's Law pill-box: E = σ/ε₀ just outside conductor surface.",
+      "q11":"εr = E₀/E (vacuum field / medium field). Medium reduces field so εr = E₀/E.",
+      "q12":"E = F/q → unit = NC⁻¹ (Newton per Coulomb), same as V/m.",
+      "q13":"Field lines never intersect — two directions of E at one point is impossible.",
+      "q14":"E = F/q. Doubling test charge q doubles F but E = F/q stays unchanged.",
+      "q15":"V = W/q = 20 J ÷ 2 C = 10 V.",
+      "q16":"Surface charge density σ = Total charge ÷ Total area.",
+      "q17":"Electrostatic field is conservative — work done in a closed loop = 0.",
+      "q18":"Φ = E·A·cosθ → unit = Nm²C⁻¹.",
+      "q19":"k = 1/4πε₀ = 9×10⁹ Nm²C⁻² (Coulomb's constant).",
+      "q20":"ε₀ = 8.85×10⁻¹² Fm⁻¹ (permittivity of free space)."
     };
 
-    function setStatus(msg,type){ statusEl.innerHTML=""; const s=document.createElement("span"); s.textContent=msg; if(type)s.className=type; statusEl.appendChild(s); }
-    function nowIso(){ return new Date().toISOString(); }
-    function mmss(sec){ const s=Math.max(0,Math.floor(sec)); return `${String(Math.floor(s/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`; }
-    function fmtDate(tsIso){ return new Date(tsIso||Date.now()).toLocaleString(undefined,{weekday:"short",year:"numeric",month:"short",day:"2-digit",hour:"2-digit",minute:"2-digit"}); }
-    function fmtTime(tsIso){ return new Date(tsIso||Date.now()).toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit",second:"2-digit"}); }
-    function fmtDur(ms){ const s=Math.max(0,Math.floor(ms/1000)),h=Math.floor(s/3600),m=Math.floor((s%3600)/60),r=s%60,p=[]; if(h)p.push(`${h}h`); if(m)p.push(`${m}min`); p.push(`${r}sec`); return p.join(" "); }
-    function esc(t){ return String(t).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;"); }
-    function renderSnapshot(){ snapshotView.textContent=JSON.stringify({studentName:report.studentName,exam:report.exam,result:report.result,summary:report.summary,inactiveSessions:report.inactiveSessions,recentEvents:report.events.slice(-6)},null,2); }
-    function saveDraft(){ if(!sid)return; localStorage.setItem(STORAGE.reportPrefix+sid,JSON.stringify(report)); }
-    function addEvent(type,details={}){ report.events.push({at:nowIso(),type,...details}); saveDraft(); renderSnapshot(); }
-    function safeCleanup(){ if(reportUrl)URL.revokeObjectURL(reportUrl); reportUrl=""; localStorage.removeItem(STORAGE.reportLinks); }
-    function removeSession(s){ if(!s)return; localStorage.removeItem(STORAGE.answersPrefix+s); localStorage.removeItem(STORAGE.reportPrefix+s); }
-    function clearOld(){ const p=localStorage.getItem(STORAGE.active); if(p)removeSession(p); safeCleanup(); for(let i=localStorage.length-1;i>=0;i--){ const k=localStorage.key(i); if(!k)continue; if(k.startsWith(STORAGE.answersPrefix)||k.startsWith(STORAGE.reportPrefix))localStorage.removeItem(k); } }
-    function requestFS(){ const el=document.documentElement; if(!el.requestFullscreen)return Promise.resolve(); return el.requestFullscreen({navigationUI:"hide"}); }
-    function tryOL(){ if(!screen.orientation||!screen.orientation.lock){addEvent("orientation_lock_na");return;} screen.orientation.lock("portrait").then(()=>addEvent("orientation_lock_ok")).catch(()=>addEvent("orientation_lock_fail")); }
-    function getQUrl(){ return new URL("./questions.html",window.location.href).toString(); }
-    function todayGateMs(){ const d=new Date(); d.setHours(START_HOUR,START_MIN,0,0); return d.getTime(); }
-    function currentViewport(){
-      const vv=window.visualViewport;
-      return {
-        width:Math.round((vv&&vv.width)||window.innerWidth||document.documentElement.clientWidth||0),
-        height:Math.round((vv&&vv.height)||window.innerHeight||document.documentElement.clientHeight||0)
-      };
-    }
-    function isExamViewportTooSmall(){
-      const vp=currentViewport();
-      return vp.width<MIN_EXAM_WIDTH || vp.height<MIN_EXAM_HEIGHT;
-    }
-    function viewportGateMessage(){
-      const vp=currentViewport();
-      return `Screen size chhota hai (${vp.width}x${vp.height}). Split screen band karke ya browser area bada karke start karein.`;
-    }
+    let studentName="";
+    const nameModalWrap=document.getElementById("nameModalWrap");
+    const nameInput=document.getElementById("nameInput");
+    const nameError=document.getElementById("nameError");
+    const nameOkBtn=document.getElementById("nameOkBtn");
+    const mainPage=document.getElementById("mainPage");
+    const welcomeName=document.getElementById("welcomeName");
 
-    function isStartGateOpen(){
-      // ── TIME GATE DISABLED FOR TESTING ──
-      // Button hamesha enabled rahega abhi.
-      // Time gate wapas enable karne ke liye neeche wala block uncomment karo
-      // aur upar wali "return true;" line comment karo.
-      return true;
-
-      /* // ── TIME GATE (uncomment to enable) ──
-      if(localStorage.getItem(LOCAL_UNLOCK_KEY)) return true;
-      if(Date.now() >= todayGateMs()){
-        localStorage.setItem(LOCAL_UNLOCK_KEY,"1");
-        return true;
-      }
-      return false;
-      */
+    function submitName(){
+      const raw=nameInput.value.trim();
+      if(!raw){nameError.textContent="Naam likhna zaroori hai.";return;}
+      if(raw.length<2){nameError.textContent="Kam se kam 2 akshar likhein.";return;}
+      studentName=raw.toUpperCase();
+      welcomeName.textContent=studentName;
+      nameModalWrap.style.display="none";
+      mainPage.classList.remove("hidden");
+      document.body.classList.add("pre-exam");
+      examBtn.disabled=true;
+      updateStartGateUi();
     }
+    nameOkBtn.addEventListener("click",submitName);
+    nameInput.addEventListener("keydown",e=>{if(e.key==="Enter")submitName();});
+    nameModalWrap.addEventListener("click",e=>{if(e.target===nameModalWrap)nameInput.focus();});
+
+    const examBtn=document.getElementById("examBtn");
+    const statusEl=document.getElementById("status");
+    const timerBox=document.getElementById("timerBox");
+    const timerEl=document.getElementById("timer");
+    const startGateLine=document.getElementById("startGateLine");
+    const frame=document.getElementById("questionFrame");
+    const examOverlay=document.getElementById("examOverlay");
+    const openPdfBtn=document.getElementById("openPdfBtn");
+    const shareBtn=document.getElementById("shareBtn");
+    const viewResultBtn=document.getElementById("viewResultBtn");
+    const downloadResultBtn=document.getElementById("downloadResultBtn");
+    const snapshotView=document.getElementById("snapshotView");
+    const afterSubmitActions=document.getElementById("afterSubmitActions");
+    const shareModalWrap=document.getElementById("shareModalWrap");
+    const shareModalOk=document.getElementById("shareModalOk");
+
+    let examRunning=false,submitted=false,startAtMs=0,submitAtMs=0;
+    let inactiveStartMs=0,sid="",timerInt=null,gateTimerInt=null,reportUrl="";
+    let viewportWasTooSmall=false,fullscreenWasOn=false;
+    let examViewportBase=null,systemUiRevealTimer=null,systemUiWasRevealed=false;
+    let parentFocusLost=false,focusPollInt=null;
+
+    const report={
+      timezone:Intl.DateTimeFormat().resolvedOptions().timeZone||"Unknown",
+      userAgent:navigator.userAgent,studentName:"",
+      exam:{durationSeconds:EXAM_SECONDS,startAt:null,submitAt:null,submitReason:null,sessionId:null},
+      inactiveSessions:[],events:[],
+      result:{totalQuestions:0,attempted:0,correct:0,wrong:0,unattempted:0,baseScore:0,leaveIncidentCount:0,negativeMarks:0,finalScore:0,selections:[]},
+      summary:{totalInactiveMs:0}
+    };
+
+    function setStatus(msg,type){statusEl.innerHTML="";const s=document.createElement("span");s.textContent=msg;if(type)s.className=type;statusEl.appendChild(s);}
+    function nowIso(){return new Date().toISOString();}
+    function mmss(sec){const s=Math.max(0,Math.floor(sec));return `${String(Math.floor(s/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`;}
+    function fmtDate(tsIso){return new Date(tsIso||Date.now()).toLocaleString(undefined,{weekday:"short",year:"numeric",month:"short",day:"2-digit",hour:"2-digit",minute:"2-digit"});}
+    function fmtTime(tsIso){return new Date(tsIso||Date.now()).toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit",second:"2-digit"});}
+    function fmtDur(ms){const s=Math.max(0,Math.floor(ms/1000)),h=Math.floor(s/3600),m=Math.floor((s%3600)/60),r=s%60,p=[];if(h)p.push(`${h}h`);if(m)p.push(`${m}min`);p.push(`${r}sec`);return p.join(" ");}
+    function esc(t){return String(t).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");}
+    function renderSnapshot(){snapshotView.textContent=JSON.stringify({studentName:report.studentName,exam:report.exam,result:report.result,summary:report.summary,inactiveSessions:report.inactiveSessions,recentEvents:report.events.slice(-6)},null,2);}
+    function saveDraft(){if(!sid)return;localStorage.setItem(STORAGE.reportPrefix+sid,JSON.stringify(report));}
+    function addEvent(type,details={}){report.events.push({at:nowIso(),type,...details});saveDraft();renderSnapshot();}
+    function safeCleanup(){if(reportUrl)URL.revokeObjectURL(reportUrl);reportUrl="";localStorage.removeItem(STORAGE.reportLinks);}
+    function removeSession(s){if(!s)return;localStorage.removeItem(STORAGE.answersPrefix+s);localStorage.removeItem(STORAGE.reportPrefix+s);}
+    function clearOld(){const p=localStorage.getItem(STORAGE.active);if(p)removeSession(p);safeCleanup();for(let i=localStorage.length-1;i>=0;i--){const k=localStorage.key(i);if(!k)continue;if(k.startsWith(STORAGE.answersPrefix)||k.startsWith(STORAGE.reportPrefix))localStorage.removeItem(k);}}
+    function requestFS(){const el=document.documentElement;if(!el.requestFullscreen)return Promise.resolve();return el.requestFullscreen({navigationUI:"hide"});}
+    function tryOL(){if(!screen.orientation||!screen.orientation.lock){addEvent("orientation_lock_na");return;}screen.orientation.lock("portrait").then(()=>addEvent("orientation_lock_ok")).catch(()=>addEvent("orientation_lock_fail"));}
+    function getQUrl(){return new URL("./questions.html",window.location.href).toString();}
+    function todayGateMs(){const d=new Date();d.setHours(START_HOUR,START_MIN,0,0);return d.getTime();}
+    function currentViewport(){const vv=window.visualViewport;return{width:Math.round((vv&&vv.width)||window.innerWidth||0),height:Math.round((vv&&vv.height)||window.innerHeight||0)};}
+    function isExamViewportTooSmall(){const vp=currentViewport();return vp.width<MIN_EXAM_WIDTH||vp.height<MIN_EXAM_HEIGHT;}
+    function viewportGateMessage(){const vp=currentViewport();return `Screen chhota hai (${vp.width}x${vp.height}). Split screen band karein.`;}
+    function isStartGateOpen(){return true;}
 
     function updateStartGateUi(){
       if(examRunning)return;
-      if(isExamViewportTooSmall()){
-        examBtn.disabled=true;
-        startGateLine.textContent=viewportGateMessage();
-        return;
-      }
-      if(isStartGateOpen()){ examBtn.disabled=false; startGateLine.textContent=""; if(gateTimerInt)clearInterval(gateTimerInt); gateTimerInt=null; return; }
+      if(isExamViewportTooSmall()){examBtn.disabled=true;startGateLine.textContent=viewportGateMessage();return;}
+      if(isStartGateOpen()){examBtn.disabled=false;startGateLine.textContent="";if(gateTimerInt)clearInterval(gateTimerInt);gateTimerInt=null;return;}
       examBtn.disabled=true;
       const rem=Math.max(0,Math.ceil((todayGateMs()-Date.now())/1000));
-      startGateLine.textContent=`Start locked — opens in ~${Math.floor(rem/3600)}h ${Math.floor((rem%3600)/60)}m ${rem%60}s`;
-      if(!gateTimerInt) gateTimerInt=setInterval(updateStartGateUi,500);
+      startGateLine.textContent=`Locked — opens in ~${Math.floor(rem/3600)}h ${Math.floor((rem%3600)/60)}m`;
+      if(!gateTimerInt)gateTimerInt=setInterval(updateStartGateUi,500);
     }
 
-    function markInactiveStart(reason){ if(!examRunning||submitted||inactiveStartMs)return; inactiveStartMs=Date.now(); addEvent("inactive_start_page_hidden",{reason}); }
+    function markInactiveStart(reason){if(!examRunning||submitted||inactiveStartMs)return;inactiveStartMs=Date.now();addEvent("inactive_start",{reason});}
     function markInactiveEnd(reason){
       if(!examRunning||submitted||!inactiveStartMs)return;
-      const start=inactiveStartMs,end=Date.now(),ms=end-start;
-      inactiveStartMs=0;
-      if(ms<MIN_INACTIVE_SESSION_MS){
-        addEvent("brief_focus_interruption",{reason,awayMs:ms});
-        return;
-      }
+      const start=inactiveStartMs,end=Date.now(),ms=end-start;inactiveStartMs=0;
+      if(ms<MIN_INACTIVE_SESSION_MS){addEvent("brief_focus_interruption",{reason,awayMs:ms});return;}
       report.inactiveSessions.push({leftAtIso:new Date(start).toISOString(),returnedAtIso:new Date(end).toISOString(),awayMs:ms});
       report.summary.totalInactiveMs+=ms;
-      addEvent("inactive_end_page_visible",{reason,awaySeconds:Math.max(1,Math.round(ms/1000))});
+      addEvent("inactive_end",{reason,awaySeconds:Math.max(1,Math.round(ms/1000))});
     }
-    function startParentFocusLoss(reason){
-      if(!examRunning||submitted||parentFocusLost)return;
-      parentFocusLost=true;
-      markInactiveStart(reason);
-    }
-    function endParentFocusLoss(reason){
-      if(parentFocusLost){
-        parentFocusLost=false;
-        markInactiveEnd(reason);
-      }
-    }
-    function checkParentFocus(){
-      if(!examRunning||submitted)return;
-      if(document.hasFocus()) endParentFocusLoss("page_focus_returned");
-      else startParentFocusLoss("page_focus_lost_possible_overlay");
-    }
+    function startParentFocusLoss(reason){if(!examRunning||submitted||parentFocusLost)return;parentFocusLost=true;markInactiveStart(reason);}
+    function endParentFocusLoss(reason){if(parentFocusLost){parentFocusLost=false;markInactiveEnd(reason);}}
+    function checkParentFocus(){if(!examRunning||submitted)return;if(document.hasFocus())endParentFocusLoss("focus_returned");else startParentFocusLoss("focus_lost");}
     function handleViewportChange(){
       const tooSmall=isExamViewportTooSmall();
-      if(examRunning&&!submitted&&tooSmall!==viewportWasTooSmall){
-        addEvent(tooSmall?"viewport_too_small":"viewport_restored",currentViewport());
-      }
-      viewportWasTooSmall=tooSmall;
-      detectSystemUiReveal();
-      updateStartGateUi();
+      if(examRunning&&!submitted&&tooSmall!==viewportWasTooSmall)addEvent(tooSmall?"viewport_too_small":"viewport_restored",currentViewport());
+      viewportWasTooSmall=tooSmall;detectSystemUiReveal();updateStartGateUi();
     }
     function detectSystemUiReveal(){
       if(!examRunning||submitted)return;
       const vp=currentViewport();
-      if(!examViewportBase){ examViewportBase=vp; return; }
-      if(vp.width>examViewportBase.width||vp.height>examViewportBase.height) examViewportBase=vp;
-      const heightDrop=examViewportBase.height-vp.height;
-      const widthDrop=examViewportBase.width-vp.width;
-      const suspicious=!!document.fullscreenElement&&!isExamViewportTooSmall()&&(heightDrop>=48||widthDrop>=48);
+      if(!examViewportBase){examViewportBase=vp;return;}
+      if(vp.width>examViewportBase.width||vp.height>examViewportBase.height)examViewportBase=vp;
+      const hd=examViewportBase.height-vp.height,wd=examViewportBase.width-vp.width;
+      const suspicious=!!document.fullscreenElement&&!isExamViewportTooSmall()&&(hd>=48||wd>=48);
       if(suspicious&&!systemUiWasRevealed&&!systemUiRevealTimer){
         systemUiRevealTimer=setTimeout(()=>{
-          systemUiRevealTimer=null;
-          if(!examRunning||submitted)return;
-          systemUiWasRevealed=true;
-          addEvent("system_ui_revealed_possible_swipe",{...currentViewport(),heightDrop,widthDrop});
+          systemUiRevealTimer=null;if(!examRunning||submitted)return;
+          systemUiWasRevealed=true;addEvent("system_ui_revealed",{...currentViewport(),hd,wd});
         },500);
       }
-      if(!suspicious){
-        if(systemUiRevealTimer){ clearTimeout(systemUiRevealTimer); systemUiRevealTimer=null; }
-        if(systemUiWasRevealed){
-          systemUiWasRevealed=false;
-          addEvent("system_ui_restored",currentViewport());
-        }
-      }
+      if(!suspicious){if(systemUiRevealTimer){clearTimeout(systemUiRevealTimer);systemUiRevealTimer=null;}if(systemUiWasRevealed){systemUiWasRevealed=false;addEvent("system_ui_restored",currentViewport());}}
     }
     function handleFullscreenChange(){
       if(!examRunning||submitted)return;
-      if(document.fullscreenElement){ fullscreenWasOn=true; return; }
-      if(fullscreenWasOn){
-        fullscreenWasOn=false;
-        addEvent("fullscreen_exited_possible_overlay");
-      }
+      if(document.fullscreenElement){fullscreenWasOn=true;return;}
+      if(fullscreenWasOn){fullscreenWasOn=false;addEvent("fullscreen_exited");}
     }
 
     function computeResult(){
-      const raw=localStorage.getItem(STORAGE.answersPrefix+sid); if(!raw)return;
-      let data=null; try{data=JSON.parse(raw);}catch{data=null;}
+      const raw=localStorage.getItem(STORAGE.answersPrefix+sid);if(!raw)return;
+      let data=null;try{data=JSON.parse(raw);}catch{data=null;}
       if(!data||!Array.isArray(data.questions))return;
-      const answers=data.answers||{}; let attempted=0,correct=0,wrong=0,unattempted=0; const selections=[];
+      const answers=data.answers||{};let attempted=0,correct=0,wrong=0,unattempted=0;const selections=[];
       data.questions.forEach(q=>{
         const sel=answers[q.id]||null;
-        if(!sel) unattempted++;
-        else{ attempted++; if(sel===q.correctOption)correct++; else wrong++; }
-        selections.push({questionId:q.id,question:q.question,options:q.options,selectedOption:sel,correctOption:q.correctOption,isCorrect:!!sel&&sel===q.correctOption});
+        if(!sel)unattempted++;
+        else{attempted++;if(sel===q.correctOption)correct++;else wrong++;}
+        selections.push({
+          questionId:q.id,question:q.question,options:q.options,
+          selectedOption:sel,correctOption:q.correctOption,
+          isCorrect:!!sel&&sel===q.correctOption,
+          explanation:ANSWER_EXPLANATIONS[q.id]||""
+        });
       });
-      const lc=report.inactiveSessions.length,pm=Math.floor(lc/3),bs=correct;
-      report.result={totalQuestions:data.questions.length,attempted,correct,wrong,unattempted,baseScore:bs,leaveIncidentCount:lc,penaltyMarks:pm,finalScore:bs-pm,selections};
+      const lc=report.inactiveSessions.length,nm=Math.floor(lc/3),bs=correct;
+      report.result={totalQuestions:data.questions.length,attempted,correct,wrong,unattempted,baseScore:bs,leaveIncidentCount:lc,negativeMarks:nm,finalScore:bs-nm,selections};
     }
 
     function buildReportData(){
       const iso=submitAtMs?new Date(submitAtMs).toISOString():nowIso();
       const durMs=submitAtMs&&startAtMs?submitAtMs-startAtMs:0;
       const awayLines=report.inactiveSessions.map((s,i)=>
-        `${i+1}. Gaye: ${fmtTime(s.leftAtIso)}  |  Aaye: ${fmtTime(s.returnedAtIso)}  |  Dur: ${fmtDur(s.awayMs)}`
+        `${i+1}. Gaye: ${fmtTime(s.leftAtIso)} | Aaye: ${fmtTime(s.returnedAtIso)} | ${fmtDur(s.awayMs)}`
       );
-      return { name:report.studentName, dateStr:fmtDate(iso), examSpan:`${fmtDate(report.exam.startAt)} → ${fmtDate(report.exam.submitAt)} (${fmtDur(durMs)})`, awayLines, machineReport:report };
+      return{name:report.studentName,dateStr:fmtDate(iso),examSpan:`${fmtDate(report.exam.startAt)} → ${fmtDate(report.exam.submitAt)} (${fmtDur(durMs)})`,awayLines,machineReport:report};
     }
 
     function buildReportHtmlBody(d,{includeAwayRecord=true}={}){
       const r=d.machineReport.result;
-      const awayHtml=d.awayLines.length
-        ? `<ul>${d.awayLines.map(l=>`<li>${esc(l)}</li>`).join("")}</ul>`
-        : `<p class="none-text">Kabhi bahar nahi gaye ✓</p>`;
-      const awaySection=includeAwayRecord?`
-        <div class="section">
-          <div class="sec-head">Bahar Jane Ka Record</div>
-          ${awayHtml}
-        </div>`:"";
-      const suspiciousTypes=new Set(["brief_focus_interruption","viewport_too_small","fullscreen_exited_possible_overlay","system_ui_revealed_possible_swipe","question_frame_focus_shift_inside_page"]);
-      const suspicious=(d.machineReport.events||[]).filter(ev=>suspiciousTypes.has(ev.type));
-      const suspiciousSection=suspicious.length?`
-        <div class="section">
-          <div class="sec-head">Suspicious Signals</div>
-          <ul>${suspicious.map((ev,i)=>`<li>${i+1}. ${esc(fmtTime(ev.at))} - ${esc(ev.type)}${ev.awayMs!=null?` (${ev.awayMs}ms)`:""}</li>`).join("")}</ul>
-        </div>`:"";
+      const awayHtml=d.awayLines.length?`<ul>${d.awayLines.map(l=>`<li>${esc(l)}</li>`).join("")}</ul>`:`<p class="none-text">Kabhi bahar nahi gaye ✓</p>`;
+      const awaySection=includeAwayRecord?`<div class="section"><div class="sec-head">Bahar Jane Ka Record</div>${awayHtml}</div>`:"";
+      const suspTypes=new Set(["brief_focus_interruption","viewport_too_small","fullscreen_exited","system_ui_revealed","frame_focus_shift"]);
+      const susp=(d.machineReport.events||[]).filter(ev=>suspTypes.has(ev.type));
+      const suspSection=susp.length?`<div class="section"><div class="sec-head">⚠ Suspicious Signals</div><ul>${susp.map((ev,i)=>`<li>${i+1}. ${esc(fmtTime(ev.at))} — ${esc(ev.type)}</li>`).join("")}</ul></div>`:"";
+
+      const pct=r.totalQuestions>0?Math.round((r.finalScore/r.totalQuestions)*100):0;
+      const barColor=pct>=60?"#22c55e":pct>=35?"#f59e0b":"#ef4444";
+
       const qHtml=r.selections.map((s,i)=>{
         const badge=!s.selectedOption
-          ? `<span class="badge skip">Skip</span>`
-          : s.isCorrect ? `<span class="badge ok">✓ Sahi</span>` : `<span class="badge bad">✗ Galat</span>`;
+          ?`<span class="badge skip">— Skip</span>`
+          :s.isCorrect
+            ?`<span class="badge ok">✔ Sahi</span>`
+            :`<span class="badge bad">✘ Galat</span>`;
         const optRows=s.options?Object.entries(s.options).map(([k,v])=>{
           let cls="opt-neutral",note="";
-          if(k===s.correctOption&&k===s.selectedOption){ cls="opt-ok"; note=` <span class="tag tag-ok">✓ Aapka jawab — Sahi</span>`; }
-          else if(k===s.correctOption){ cls="opt-ok"; note=` <span class="tag tag-ok">✓ Sahi jawab</span>`; }
-          else if(k===s.selectedOption){ cls="opt-bad"; note=` <span class="tag tag-bad">✗ Aapka jawab</span>`; }
+          if(k===s.correctOption&&k===s.selectedOption){cls="opt-ok";note=` <span class="tag tag-ok">✔ Aapka — Sahi</span>`;}
+          else if(k===s.correctOption){cls="opt-ok";note=` <span class="tag tag-ok">✔ Sahi Jawab</span>`;}
+          else if(k===s.selectedOption){cls="opt-bad";note=` <span class="tag tag-bad">✘ Aapka Jawab</span>`;}
           return `<div class="opt-row ${cls}"><span class="opt-key">${esc(k)}.</span><span>${esc(v)}${note}</span></div>`;
         }).join(""):"";
-        return `<div class="q-card"><div class="q-title">Q${i+1}. ${esc(s.question)} ${badge}</div><div class="opts">${optRows}</div></div>`;
+        const expHtml=s.explanation?`<div class="explanation"><span>💡</span><div><b>Explanation:</b> ${esc(s.explanation)}</div></div>`:"";
+        return `<div class="q-card"><div class="q-title">Q${i+1}. ${esc(s.question)} ${badge}</div><div class="opts">${optRows}</div>${expHtml}</div>`;
       }).join("");
 
       return `
-        <div class="name-header">HI, <span class="name-grad">${esc(d.name)}</span> — Exam Report</div>
-        <div class="section">
-          <div class="sec-head">📊 Exam Summary</div>
-          <div class="summary-grid">
-            <div class="sg-row"><span class="sg-label">Student Name</span><span class="c-grad">${esc(d.name)}</span></div>
-            <div class="sg-row"><span class="sg-label">Date</span><span>${esc(d.dateStr)}</span></div>
-            <div class="sg-row"><span class="sg-label">Duration</span><span>${esc(d.examSpan)}</span></div>
-            <div class="sg-row"><span class="sg-label">Total Questions</span><span>${r.totalQuestions}</span></div>
-            <div class="sg-row"><span class="sg-label">Attempted</span><span>${r.attempted}</span></div>
-            <div class="sg-row"><span class="sg-label">Skipped</span><span>${r.unattempted}</span></div>
-            <div class="sg-row"><span class="sg-label">Sahi ✓</span><span class="c-ok">${r.correct}</span></div>
-            <div class="sg-row"><span class="sg-label">Galat ✗</span><span class="c-bad">${r.wrong}</span></div>
-            <div class="sg-row"><span class="sg-label">Base Score</span><span>${r.baseScore}</span></div>
-            <div class="sg-row"><span class="sg-label">Penalty</span><span class="c-bad">−${r.penaltyMarks}</span></div>
-            <div class="sg-row final-row"><span class="sg-label">Final Score</span><span class="c-gold">${r.finalScore}</span></div>
-          </div>
-          <div class="note-text">Penalty: har 3 baar bahar jane par −1 mark</div>
+      <div class="report-header">
+        <div class="rh-name">${esc(d.name)}</div>
+        <div class="rh-sub">Physics — Electrostatics &nbsp;|&nbsp; Exam Report</div>
+        <div class="rh-date">${esc(d.dateStr)}</div>
+      </div>
+
+      <div class="section">
+        <div class="sec-head">📊 MCQ Score Summary &nbsp;<span style="font-size:12px;color:#64748b;font-weight:400">(Total 50 marks: MCQ 20 + Short Answer 30)</span></div>
+        <div class="summary-grid">
+          <div class="sg-row"><span class="sg-label">Total MCQ</span><span>${r.totalQuestions} &nbsp;×&nbsp; 1 mark</span></div>
+          <div class="sg-row"><span class="sg-label">Attempted</span><span>${r.attempted}</span></div>
+          <div class="sg-row"><span class="sg-label">Skipped</span><span>${r.unattempted}</span></div>
+          <div class="sg-row"><span class="sg-label">✔ Sahi</span><span class="c-ok">${r.correct}</span></div>
+          <div class="sg-row"><span class="sg-label">✘ Galat</span><span class="c-bad">${r.wrong}</span></div>
+          <div class="sg-row"><span class="sg-label">Base Score</span><span>${r.baseScore} / ${r.totalQuestions}</span></div>
+          <div class="sg-row"><span class="sg-label">Negative Marks</span><span class="c-neg">−${r.negativeMarks}</span></div>
+          <div class="sg-row final-row"><span class="sg-label">Final MCQ Score</span><span class="c-gold">${r.finalScore} / ${r.totalQuestions}</span></div>
         </div>
-        ${awaySection}
-        ${suspiciousSection}
-        <div class="section">
-          <div class="sec-head">📝 Questions &amp; Answers</div>
-          ${qHtml}
-        </div>`;
+        <div class="score-bar-wrap"><div class="score-bar" style="width:${pct}%;background:${barColor}"></div></div>
+        <div class="note-text">Negative marks: har 3 baar bahar jane par −1 mark &nbsp;|&nbsp; Short Answer (30 marks) copy se alag evaluate hoga</div>
+      </div>
+
+      ${awaySection}
+      ${suspSection}
+
+      <div class="section">
+        <div class="sec-head">📝 MCQ — Sawal, Sahi/Galat &amp; Explanation</div>
+        ${qHtml}
+      </div>`;
     }
 
     function buildFullPage(d,opts={}){
       return `<!doctype html><html><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Exam Report — ${esc(d.name)}</title>
+<title>Report — ${esc(d.name)}</title>
 <style>
 *{box-sizing:border-box}
 body{font-family:Arial,sans-serif;margin:0;padding:16px;background:#0b1220;color:#e2e8f0;font-size:15px;line-height:1.65}
-.name-header{font-size:clamp(18px,5vw,26px);font-weight:700;text-align:center;padding:14px 0 18px;letter-spacing:1px}
-.name-grad{background:linear-gradient(90deg,#34d399,#22d3ee,#a78bfa,#fb7185);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.c-grad{background:linear-gradient(90deg,#34d399,#22d3ee);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-weight:700}
+.report-header{text-align:center;padding:16px 0 18px;border-bottom:1px solid #1e3a5f;margin-bottom:18px}
+.rh-name{font-size:clamp(20px,5vw,28px);font-weight:700;background:linear-gradient(90deg,#34d399,#22d3ee,#a78bfa,#fb7185);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.rh-sub{font-size:14px;color:#7dd3fc;margin-top:4px;font-weight:600}
+.rh-date{font-size:13px;color:#64748b;margin-top:2px}
 .section{margin-bottom:22px}
 .sec-head{font-size:16px;font-weight:700;color:#93c5fd;border-bottom:1px solid #1e3a5f;padding-bottom:6px;margin-bottom:10px}
 .summary-grid{background:#0d1f38;border-radius:10px;padding:12px 14px}
@@ -484,19 +446,22 @@ body{font-family:Arial,sans-serif;margin:0;padding:16px;background:#0b1220;color
 .final-row{font-weight:700;font-size:15px;padding-top:8px}
 .c-ok{color:#86efac;font-weight:700}
 .c-bad{color:#fda4af;font-weight:700}
+.c-neg{color:#fb923c;font-weight:700}
 .c-gold{color:#fbbf24;font-weight:700}
-.note-text{font-size:12px;color:#64748b;margin-top:6px}
-.none-text{color:#86efac;font-size:14px;margin:4px 0}
+.score-bar-wrap{background:#1e293b;border-radius:6px;height:8px;margin:10px 0 4px;overflow:hidden}
+.score-bar{height:8px;border-radius:6px}
+.note-text{font-size:12px;color:#64748b;margin-top:4px}
+.none-text{color:#86efac;font-size:14px}
 ul{list-style:none;padding:0;margin:0}
 li{padding:6px 0;border-bottom:1px solid #1a2d47;font-size:14px;color:#cbd5e1}
 li:last-child{border-bottom:none}
 .q-card{background:#0d1f38;border:1px solid #1e3a5f;border-radius:10px;padding:12px 14px;margin-bottom:10px}
 .q-title{font-weight:700;color:#e2e8f0;margin-bottom:8px;font-size:15px;line-height:1.5}
-.badge{display:inline-block;font-size:12px;padding:2px 9px;border-radius:10px;margin-left:8px;vertical-align:middle}
+.badge{display:inline-block;font-size:12px;padding:2px 9px;border-radius:10px;margin-left:6px;vertical-align:middle;font-weight:600}
 .ok{background:#14532d;color:#86efac}
 .bad{background:#4c0519;color:#fda4af}
 .skip{background:#1e293b;color:#94a3b8}
-.opts{display:flex;flex-direction:column;gap:3px}
+.opts{display:flex;flex-direction:column;gap:3px;margin-bottom:8px}
 .opt-row{display:flex;gap:8px;align-items:flex-start;padding:5px 8px;border-radius:7px;font-size:14px}
 .opt-ok{background:#0f2e1a;color:#86efac}
 .opt-bad{background:#2d0e16;color:#fda4af}
@@ -505,6 +470,8 @@ li:last-child{border-bottom:none}
 .tag{font-size:11px;padding:1px 7px;border-radius:8px;white-space:nowrap;margin-left:4px}
 .tag-ok{background:#14532d;color:#86efac}
 .tag-bad{background:#4c0519;color:#fda4af}
+.explanation{display:flex;gap:8px;align-items:flex-start;background:#0a1a30;border:1px solid #1e4a7e;border-radius:8px;padding:9px 11px;font-size:13px;color:#bfdbfe;line-height:1.6;margin-top:4px}
+.explanation b{color:#7dd3fc}
 </style></head><body>${buildReportHtmlBody(d,opts)}</body></html>`;
     }
 
@@ -514,77 +481,71 @@ li:last-child{border-bottom:none}
       const qtext=r.selections.map((s,i)=>{
         const opts=s.options?Object.entries(s.options).map(([k,v])=>{
           let note="";
-          if(k===s.correctOption&&k===s.selectedOption) note=" <-- aapka jawab (SAHI)";
-          else if(k===s.correctOption) note=" <-- sahi jawab";
-          else if(k===s.selectedOption) note=" <-- aapka jawab (GALAT)";
+          if(k===s.correctOption&&k===s.selectedOption)note=" <-- Aapka jawab (SAHI ✔)";
+          else if(k===s.correctOption)note=" <-- Sahi jawab ✔";
+          else if(k===s.selectedOption)note=" <-- Aapka jawab (GALAT ✘)";
           return `  ${k}. ${v}${note}`;
         }).join("\n"):"";
-        const st=!s.selectedOption?"Skip":s.isCorrect?"Sahi":"Galat";
-        return `Q${i+1}. ${s.question} [${st}]\n${opts}`;
+        const st=!s.selectedOption?"Skip":s.isCorrect?"✔ Sahi":"✘ Galat";
+        const exp=s.explanation?`\n  💡 ${s.explanation}`:"";
+        return `Q${i+1}. ${s.question} [${st}]\n${opts}${exp}`;
       }).join("\n\n");
       const awayBlock=includeAwayRecord?`\n\nBAHAR JANE KA RECORD\n${away}`:"";
-      return `EXAM REPORT — ${d.name}\n${"=".repeat(50)}\nStudent: ${d.name}\nDate: ${d.dateStr}\nDuration: ${d.examSpan}\n\nSCORE\nTotal: ${r.totalQuestions} | Attempt: ${r.attempted} | Skip: ${r.unattempted}\nSahi: ${r.correct} | Galat: ${r.wrong}\nBase: ${r.baseScore} | Penalty: -${r.penaltyMarks} | Final: ${r.finalScore}${awayBlock}\n\nQUESTIONS\n${"=".repeat(50)}\n${qtext}`;
+      return `EXAM REPORT — Physics: Electrostatics\n${"=".repeat(52)}\nStudent : ${d.name}\nDate    : ${d.dateStr}\nDuration: ${d.examSpan}\n\n--- MCQ SCORE (20 marks) ---\nTotal: ${r.totalQuestions} | Attempt: ${r.attempted} | Skip: ${r.unattempted}\nSahi ✔: ${r.correct} | Galat ✘: ${r.wrong}\nBase: ${r.baseScore} | Negative: −${r.negativeMarks} | Final MCQ: ${r.finalScore}/20${awayBlock}\n\n--- MCQ QUESTIONS & ANSWERS ---\n${"=".repeat(52)}\n${qtext}`;
     }
 
-    function download(name,content,type){ const url=URL.createObjectURL(new Blob([content],{type})); const a=document.createElement("a"); a.href=url; a.download=name; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); }
-
-    function enterExamOnlyView(){ document.body.className="in-exam"; examOverlay.classList.add("active"); timerBox.style.display="block"; }
-    function exitExamOnlyView(){ document.body.className="pre-exam"; examOverlay.classList.remove("active"); timerBox.style.display="none"; timerBox.classList.remove("timer-warn"); afterSubmitActions.classList.remove("hidden"); }
+    function download(name,content,type){const url=URL.createObjectURL(new Blob([content],{type}));const a=document.createElement("a");a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);}
+    function enterExamOnlyView(){document.body.className="in-exam";examOverlay.classList.add("active");timerBox.style.display="block";}
+    function exitExamOnlyView(){document.body.className="pre-exam";examOverlay.classList.remove("active");timerBox.style.display="none";timerBox.classList.remove("timer-warn");afterSubmitActions.classList.remove("hidden");}
 
     function startExam(){
-      if(window.location.hostname==="github.com"){setStatus("GitHub Pages (github.io) link se kholo.","bad");return;}
+      if(window.location.hostname==="github.com"){setStatus("GitHub Pages link se kholo.","bad");return;}
       if(isExamViewportTooSmall()){setStatus(viewportGateMessage(),"bad");updateStartGateUi();return;}
-      if(!isStartGateOpen()){setStatus("Abhi Start time gate band hai.","warn");return;}
+      if(!isStartGateOpen()){setStatus("Abhi Start gate band hai.","warn");return;}
       if(examRunning)return;
-      clearOld(); submitted=false;
+      clearOld();submitted=false;
       report.studentName=studentName;
-      report.inactiveSessions=[]; report.events=[]; report.summary={totalInactiveMs:0};
-      report.result={totalQuestions:0,attempted:0,correct:0,wrong:0,unattempted:0,baseScore:0,leaveIncidentCount:0,penaltyMarks:0,finalScore:0,selections:[]};
+      report.inactiveSessions=[];report.events=[];report.summary={totalInactiveMs:0};
+      report.result={totalQuestions:0,attempted:0,correct:0,wrong:0,unattempted:0,baseScore:0,leaveIncidentCount:0,negativeMarks:0,finalScore:0,selections:[]};
       report.exam={durationSeconds:EXAM_SECONDS,startAt:null,submitAt:null,submitReason:null,sessionId:null};
-      viewportWasTooSmall=false;
-      fullscreenWasOn=false;
-      examViewportBase=currentViewport();
-      systemUiWasRevealed=false;
-      if(systemUiRevealTimer){ clearTimeout(systemUiRevealTimer); systemUiRevealTimer=null; }
-      examRunning=true; sid=`sess_${Date.now()}`; localStorage.setItem(STORAGE.active,sid);
-      startAtMs=Date.now(); report.exam.startAt=new Date(startAtMs).toISOString(); report.exam.sessionId=sid;
-      addEvent("exam_started"); enterExamOnlyView();
+      viewportWasTooSmall=false;fullscreenWasOn=false;
+      examViewportBase=currentViewport();systemUiWasRevealed=false;
+      if(systemUiRevealTimer){clearTimeout(systemUiRevealTimer);systemUiRevealTimer=null;}
+      examRunning=true;sid=`sess_${Date.now()}`;localStorage.setItem(STORAGE.active,sid);
+      startAtMs=Date.now();report.exam.startAt=new Date(startAtMs).toISOString();report.exam.sessionId=sid;
+      addEvent("exam_started");enterExamOnlyView();
       frame.src=`${getQUrl()}?session=${encodeURIComponent(sid)}`;
       setStatus("Exam started.","ok");
-      requestFS().then(()=>{ fullscreenWasOn=!!document.fullscreenElement; examViewportBase=currentViewport(); addEvent("fullscreen_ok"); }).catch(()=>addEvent("fullscreen_fail")); tryOL();
+      requestFS().then(()=>{fullscreenWasOn=!!document.fullscreenElement;examViewportBase=currentViewport();addEvent("fullscreen_ok");}).catch(()=>addEvent("fullscreen_fail"));tryOL();
       const endTs=startAtMs+EXAM_SECONDS*1000;
       if(timerInt)clearInterval(timerInt);
-      timerInt=setInterval(()=>{ const rem=Math.ceil((endTs-Date.now())/1000); timerEl.textContent=mmss(rem); timerBox.classList.toggle("timer-warn",rem>0&&rem<=10*60); if(rem<=0){clearInterval(timerInt);timerEl.textContent="00:00";} },300);
+      timerInt=setInterval(()=>{const rem=Math.ceil((endTs-Date.now())/1000);timerEl.textContent=mmss(rem);timerBox.classList.toggle("timer-warn",rem>0&&rem<=10*60);if(rem<=0){clearInterval(timerInt);timerEl.textContent="00:00";}},300);
       if(focusPollInt)clearInterval(focusPollInt);
       focusPollInt=setInterval(checkParentFocus,250);
     }
 
     function submitExam(reason="manual"){
       if(!examRunning||submitted)return;
-      submitted=true; examRunning=false; submitAtMs=Date.now();
+      submitted=true;examRunning=false;submitAtMs=Date.now();
       if(inactiveStartMs)markInactiveEnd("submit_flush");
       if(timerInt)clearInterval(timerInt);
-      if(focusPollInt){ clearInterval(focusPollInt); focusPollInt=null; }
+      if(focusPollInt){clearInterval(focusPollInt);focusPollInt=null;}
       if(document.fullscreenElement&&document.exitFullscreen)document.exitFullscreen().catch(()=>{});
-      report.exam.submitAt=new Date(submitAtMs).toISOString(); report.exam.submitReason=reason;
-      addEvent("exam_submitted",{reason}); computeResult(); saveDraft(); exitExamOnlyView();
-      examBtn.disabled=false; examBtn.textContent="Start Exam";
-      setStatus("Submit ho gayi.","ok"); shareModalWrap.classList.add("show");
-      renderSnapshot(); updateStartGateUi();
+      report.exam.submitAt=new Date(submitAtMs).toISOString();report.exam.submitReason=reason;
+      addEvent("exam_submitted",{reason});computeResult();saveDraft();exitExamOnlyView();
+      examBtn.disabled=false;examBtn.textContent="Start Exam";
+      setStatus("Submit ho gayi.","ok");shareModalWrap.classList.add("show");
+      renderSnapshot();updateStartGateUi();
     }
 
     window.addEventListener("message",e=>{
       if(e.data==="submit_exam")submitExam("manual");
       if(e.data==="exam_focus_lost"){
-        setTimeout(()=>{
-          if(!examRunning||submitted)return;
-          if(document.hasFocus()) addEvent("question_frame_focus_shift_inside_page");
-          else markInactiveStart("question_frame_focus_lost_possible_overlay");
-        },0);
+        setTimeout(()=>{if(!examRunning||submitted)return;if(document.hasFocus())addEvent("frame_focus_shift");else markInactiveStart("frame_focus_lost");},0);
       }
-      if(e.data==="exam_focus_returned")markInactiveEnd("question_frame_focus_returned");
+      if(e.data==="exam_focus_returned")markInactiveEnd("frame_focus_returned");
     });
-    examBtn.addEventListener("click",()=>{ if(examRunning&&!submitted)submitExam("manual"); else startExam(); });
+    examBtn.addEventListener("click",()=>{if(examRunning&&!submitted)submitExam("manual");else startExam();});
     shareModalOk.addEventListener("click",()=>shareModalWrap.classList.remove("show"));
 
     openPdfBtn.addEventListener("click",()=>{
@@ -600,35 +561,35 @@ li:last-child{border-bottom:none}
       const fname=`exam-report-${d.name}-${Date.now()}.html`;
       const blob=new Blob([html],{type:"text/html;charset=utf-8"}),file=new File([blob],fname,{type:"text/html"});
       try{
-        if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({title:"Exam report",text:txt.slice(0,2000),files:[file]});setStatus("Share ok.","ok");}
-        else if(navigator.share){await navigator.share({title:"Exam report",text:txt});setStatus("Share ok.","ok");}
-        else if(navigator.clipboard){await navigator.clipboard.writeText(txt);setStatus("Copied to clipboard.","warn");}
+        if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({title:"Exam Report",text:txt.slice(0,2000),files:[file]});setStatus("Share ok.","ok");}
+        else if(navigator.share){await navigator.share({title:"Exam Report",text:txt});setStatus("Share ok.","ok");}
+        else if(navigator.clipboard){await navigator.clipboard.writeText(txt);setStatus("Copied.","warn");}
         else setStatus("Share not supported.","bad");
-      }catch{ try{await navigator.share({text:txt});setStatus("Share ok.","ok");}catch{setStatus("Share cancel/fail.","bad");} }
+      }catch{try{await navigator.share({text:txt});setStatus("Share ok.","ok");}catch{setStatus("Share cancel/fail.","bad");}}
     });
     viewResultBtn.addEventListener("click",()=>{
       if(!submitted)return;
       const d=buildReportData(),html=buildFullPage(d,{includeAwayRecord:false});
       const u=URL.createObjectURL(new Blob([html],{type:"text/html"}));
-      window.open(u,"_blank"); setTimeout(()=>URL.revokeObjectURL(u),120000);
+      window.open(u,"_blank");setTimeout(()=>URL.revokeObjectURL(u),120000);
     });
     downloadResultBtn.addEventListener("click",()=>{
       if(!submitted)return;
-      const d=buildReportData(); download(`exam-result-${d.name}-${Date.now()}.html`,buildFullPage(d,{includeAwayRecord:false}),"text/html;charset=utf-8");
+      const d=buildReportData();
+      download(`exam-result-${d.name}-${Date.now()}.html`,buildFullPage(d,{includeAwayRecord:false}),"text/html;charset=utf-8");
     });
 
-    document.addEventListener("visibilitychange",()=>{ if(!examRunning||submitted)return; if(document.visibilityState==="hidden")markInactiveStart("visibility_hidden_background"); if(document.visibilityState==="visible")markInactiveEnd("visibility_visible_foreground"); });
-    window.addEventListener("pagehide",()=>{ if(examRunning&&!submitted)markInactiveStart("pagehide_navigation"); });
-    window.addEventListener("pageshow",e=>{ if(examRunning&&!submitted&&!e.persisted)markInactiveEnd("pageshow_back"); });
-    window.addEventListener("blur",()=>startParentFocusLoss("page_blur_possible_overlay"));
-    window.addEventListener("focus",()=>endParentFocusLoss("page_focus_returned"));
+    document.addEventListener("visibilitychange",()=>{if(!examRunning||submitted)return;if(document.visibilityState==="hidden")markInactiveStart("visibility_hidden");if(document.visibilityState==="visible")markInactiveEnd("visibility_visible");});
+    window.addEventListener("pagehide",()=>{if(examRunning&&!submitted)markInactiveStart("pagehide");});
+    window.addEventListener("pageshow",e=>{if(examRunning&&!submitted&&!e.persisted)markInactiveEnd("pageshow_back");});
+    window.addEventListener("blur",()=>startParentFocusLoss("page_blur"));
+    window.addEventListener("focus",()=>endParentFocusLoss("page_focus"));
     window.addEventListener("resize",handleViewportChange);
     window.addEventListener("orientationchange",()=>setTimeout(handleViewportChange,250));
-    if(window.visualViewport) window.visualViewport.addEventListener("resize",handleViewportChange);
+    if(window.visualViewport)window.visualViewport.addEventListener("resize",handleViewportChange);
     document.addEventListener("fullscreenchange",handleFullscreenChange);
 
-    addEvent("page_loaded"); renderSnapshot();
-    // examBtn init hoga tab jab mainPage dikhega
+    addEvent("page_loaded");renderSnapshot();
   </script>
 </body>
 </html>
