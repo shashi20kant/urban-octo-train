@@ -345,6 +345,7 @@
       // Screen theek hai — message clear karo, button enable karo
       examBtn.disabled = false;
       startGateLine.textContent="";
+      setStatus("", ""); 
       if(isStartGateOpen()){
         examBtn.disabled=false;
         if(gateTimerInt)clearInterval(gateTimerInt);
