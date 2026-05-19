@@ -184,6 +184,7 @@
     };
     const MIN_EXAM_WIDTH = 360;
     const MIN_EXAM_HEIGHT = 620;
+    const MIN_INACTIVE_SESSION_MS = 500;
 
     /* ── Name gate ── */
     let studentName = "";
@@ -312,7 +313,18 @@
     }
 
     function markInactiveStart(reason){ if(!examRunning||submitted||inactiveStartMs)return; inactiveStartMs=Date.now(); addEvent("inactive_start_page_hidden",{reason}); }
-    function markInactiveEnd(reason){ if(!examRunning||submitted||!inactiveStartMs)return; const end=Date.now(),ms=end-inactiveStartMs; report.inactiveSessions.push({leftAtIso:new Date(inactiveStartMs).toISOString(),returnedAtIso:new Date(end).toISOString(),awayMs:ms}); report.summary.totalInactiveMs+=ms; inactiveStartMs=0; addEvent("inactive_end_page_visible",{reason,awaySeconds:Math.round(ms/1000)}); }
+    function markInactiveEnd(reason){
+      if(!examRunning||submitted||!inactiveStartMs)return;
+      const start=inactiveStartMs,end=Date.now(),ms=end-start;
+      inactiveStartMs=0;
+      if(ms<MIN_INACTIVE_SESSION_MS){
+        addEvent("brief_focus_interruption",{reason,awayMs:ms});
+        return;
+      }
+      report.inactiveSessions.push({leftAtIso:new Date(start).toISOString(),returnedAtIso:new Date(end).toISOString(),awayMs:ms});
+      report.summary.totalInactiveMs+=ms;
+      addEvent("inactive_end_page_visible",{reason,awaySeconds:Math.max(1,Math.round(ms/1000))});
+    }
     function startParentFocusLoss(reason){
       if(!examRunning||submitted||parentFocusLost)return;
       parentFocusLost=true;
@@ -405,6 +417,13 @@
           <div class="sec-head">Bahar Jane Ka Record</div>
           ${awayHtml}
         </div>`:"";
+      const suspiciousTypes=new Set(["brief_focus_interruption","viewport_too_small","fullscreen_exited_possible_overlay","system_ui_revealed_possible_swipe","question_frame_focus_shift_inside_page"]);
+      const suspicious=(d.machineReport.events||[]).filter(ev=>suspiciousTypes.has(ev.type));
+      const suspiciousSection=suspicious.length?`
+        <div class="section">
+          <div class="sec-head">Suspicious Signals</div>
+          <ul>${suspicious.map((ev,i)=>`<li>${i+1}. ${esc(fmtTime(ev.at))} - ${esc(ev.type)}${ev.awayMs!=null?` (${ev.awayMs}ms)`:""}</li>`).join("")}</ul>
+        </div>`:"";
       const qHtml=r.selections.map((s,i)=>{
         const badge=!s.selectedOption
           ? `<span class="badge skip">Skip</span>`
@@ -439,6 +458,7 @@
           <div class="note-text">Penalty: har 3 baar bahar jane par −1 mark</div>
         </div>
         ${awaySection}
+        ${suspiciousSection}
         <div class="section">
           <div class="sec-head">📝 Questions &amp; Answers</div>
           ${qHtml}
@@ -555,7 +575,13 @@ li:last-child{border-bottom:none}
 
     window.addEventListener("message",e=>{
       if(e.data==="submit_exam")submitExam("manual");
-      if(e.data==="exam_focus_lost")markInactiveStart("question_frame_focus_lost_possible_overlay");
+      if(e.data==="exam_focus_lost"){
+        setTimeout(()=>{
+          if(!examRunning||submitted)return;
+          if(document.hasFocus()) addEvent("question_frame_focus_shift_inside_page");
+          else markInactiveStart("question_frame_focus_lost_possible_overlay");
+        },0);
+      }
       if(e.data==="exam_focus_returned")markInactiveEnd("question_frame_focus_returned");
     });
     examBtn.addEventListener("click",()=>{ if(examRunning&&!submitted)submitExam("manual"); else startExam(); });
