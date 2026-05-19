@@ -1,304 +1,302 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Exam Questions</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Physics Exam: Electrostatics</title>
   <style>
-    :root{ --bg:#020617;--line:#334155;--text:#e2e8f0;--muted:#94a3b8;--acc:#22d3ee;--acc2:#a78bfa; }
-    *{ box-sizing:border-box; }
-    html,body{
-      margin:0; width:100%; height:100%;
-      overflow:hidden; overscroll-behavior:none;
-      font-family:Arial,sans-serif; background:var(--bg); color:var(--text);
+    :root {
+      --bg: #0b1220; --card: #121a2b; --line: #2b3b5e; --text: #e6eeff; --muted: #9db0d9;
+      --accent: #34d399; --danger: #fb7185; --gold: #fbbf24;
     }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+      background: linear-gradient(120deg, #060b16, #0b1220, #111a2d);
+      color: var(--text);
+    }
+    body.pre-exam { overflow-y: auto; }
+    body.in-exam { overflow: hidden; position: fixed; width: 100%; height: 100%; }
 
-    /* Shell — flex column, no scroll */
-    .shell{
-      height:100vh;
-      height:100dvh;
-      min-height:0;
-      display:flex; flex-direction:column;
-      overflow:hidden;
+    /* Name Modal */
+    #nameModalWrap {
+      position: fixed; inset: 0; z-index: 20000; display: flex; align-items: center; justify-content: center;
+      background: linear-gradient(135deg, #060b16, #0b1220, #111a2d); padding: 20px;
     }
+    #nameModal {
+      background: rgba(18,26,43,.98); border: 1px solid #2b3b5e; border-radius: 18px; max-width: 420px; width: 100%;
+      padding: 32px 24px; text-align: center; box-shadow: 0 8px 40px rgba(0,0,0,.6);
+    }
+    .nm-title { font-size: clamp(20px,5vw,26px); font-weight: 700; margin-bottom: 6px; background: linear-gradient(90deg,#34d399,#22d3ee,#a78bfa); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .nm-sub { color: #9db0d9; font-size: 14px; margin-bottom: 24px; }
+    #nameInput { width: 100%; padding: 14px 16px; border-radius: 12px; border: 2px solid #2b3b5e; background: #0d1829; color: #e6eeff; font-size: 16px; text-align: center; outline: none; }
+    #nameInput:focus { border-color: #34d399; }
+    #nameError { color: #fb7185; font-size: 13px; margin-top: 8px; }
+    #nameOkBtn { margin-top: 18px; width: 100%; padding: 15px; border: none; border-radius: 12px; background: linear-gradient(135deg,#34d399,#059669); color: white; font-weight: 700; cursor: pointer; }
 
-    /* Question area — scrolls internally if text overflows */
-    .q-area{
-      flex:1 1 auto; min-height:0;
-      overflow-y:auto;
-      -webkit-overflow-scrolling:touch;
-      padding:12px 14px 8px;
-    }
-    .meta{ color:var(--muted); font-size:clamp(12px,3vw,14px); margin-bottom:6px; }
-    .q-text{
-      font-size:clamp(17px,4.5vw,22px);
-      margin:0 0 10px; line-height:1.45; font-weight:600;
-    }
-    .opt{
-      border:1px solid var(--line); border-radius:10px;
-      padding:12px 14px; margin-bottom:9px;
-      display:flex; gap:10px; align-items:center; cursor:pointer;
-      font-size:clamp(14px,3.8vw,17px); line-height:1.4;
-      transition:border-color .15s;
-    }
-    .opt:hover{ border-color:var(--acc); }
-    .opt input[type=radio]{ accent-color:var(--acc); flex-shrink:0; width:18px; height:18px; }
-    .logic-body{
-      border:1px solid #33507e; border-radius:10px; padding:14px;
-      background:#0b162b; color:#dbeafe; line-height:1.6;
-      font-size:clamp(14px,3.8vw,17px);
-    }
+    /* Main layout */
+    .wrap { max-width: 1200px; margin: 0 auto; padding: 0 16px 32px; }
+    .card { background: rgba(18,26,43,.95); border: 1px solid var(--line); border-radius: 14px; padding: 18px; margin-bottom: 14px; }
+    .hidden { display: none !important; }
+    h1, h2 { margin: 0 0 10px; }
+    .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
 
-    /* Controls — normal flow at bottom.
-       NOT fixed — on split screen small windows they get cut off naturally (intentional). */
-    .ctrl{
-      flex:0 0 auto;
-      background:#020617;
-      border-top:1px solid #1e2d45;
-      padding:8px 12px 10px;
+    /* header left align */
+    #welcomeBanner {
+      display: flex; justify-content: space-between; align-items: baseline;
+      padding: 12px 20px 4px; border-bottom: 1px solid #2b3b5e; margin-bottom: 16px;
     }
-    .pal-label{
-      font-size:clamp(11px,2.8vw,13px); color:var(--muted); margin-bottom:4px; font-weight:600;
-    }
-    .palette{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom:6px; }
-    .pill{
-      width:clamp(32px,8vw,40px); height:clamp(32px,8vw,40px);
-      border-radius:50%; border:1px solid var(--line);
-      background:#1e293b; color:#cbd5e1; cursor:pointer; font-weight:700;
-      font-size:clamp(12px,3.2vw,15px);
-      display:flex; align-items:center; justify-content:center; padding:0;
-    }
-    .pill.am{ outline:2px solid var(--acc); outline-offset:1px; }
-    .pill.al{ outline:2px solid var(--acc2); outline-offset:1px; }
-    .pill.answered{ background:#14532d; border-color:#22c55e; color:#86efac; }
-    .nav-row{
-      display:flex; gap:7px; align-items:center;
-      justify-content:center; margin-bottom:5px;
-    }
-    .nlabel{ font-size:clamp(11px,3vw,13px); color:var(--muted); min-width:44px; text-align:center; }
-    button{
-      border:0; border-radius:9px; cursor:pointer;
-      padding:clamp(8px,2.5vw,11px) clamp(12px,3.5vw,18px);
-      font-weight:700; font-size:clamp(13px,3.5vw,16px);
-      background:#334155; color:#f1f5f9;
-    }
-    button:disabled{ opacity:0.35; cursor:not-allowed; }
-    .sbtn{
-      background:linear-gradient(135deg,#16a34a,#15803d,#059669);
-      color:#fff;
-      box-shadow:0 3px 12px rgba(22,163,74,.35);
-      padding:clamp(8px,2.5vw,11px) clamp(16px,4vw,24px);
-    }
-    .sbtn:active{ opacity:.85; }
-    .divider{ border:none; border-top:1px solid #1e2d45; margin:5px 0; }
-    .hint{ color:#86efac; font-size:clamp(10px,2.5vw,12px); min-height:14px; text-align:center; margin-top:2px; }
-    .size-blocker{
-      position:fixed; inset:0; z-index:99999;
-      display:none; align-items:center; justify-content:center;
-      padding:18px; text-align:center;
-      background:#020617; color:#e2e8f0;
-    }
-    .size-blocker.show{ display:flex; }
-    .size-box{
-      max-width:420px; border:1px solid #334155; border-radius:12px;
-      background:#0b162b; padding:18px; box-shadow:0 10px 30px rgba(0,0,0,.35);
-    }
-    .size-box strong{ display:block; margin-bottom:8px; color:#fda4af; font-size:18px; }
-    .size-box span{ color:#cbd5e1; line-height:1.55; font-size:14px; }
+    .name-left { font-size: 1.2rem; font-weight: 600; background: linear-gradient(90deg,#34d399,#22d3ee); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .exam-title { font-size: 1.3rem; font-weight: bold; letter-spacing: 1px; color: #fbbf24; }
+
+    button { border: 0; border-radius: 10px; padding: 12px 18px; font-weight: 700; cursor: pointer; }
+    #examBtn { background: linear-gradient(135deg,#34d399,#059669); color: white; padding: 14px 28px; border-radius: 12px; box-shadow: 0 4px 15px rgba(52,211,153,.3); }
+    #examBtn:disabled { background: #3d4f5f; color: #93a8c4; cursor: not-allowed; }
+    .secondary { background: #2c3f63; color: #eef5ff; }
+
+    #timerBox { position: fixed; top: 12px; right: 12px; background: rgba(8,14,26,.96); border: 1px solid #355081; border-radius: 12px; padding: 8px 14px; display: none; z-index: 9999; white-space: nowrap; }
+    #timer { font-size: clamp(20px,5vw,26px); letter-spacing: 2px; font-weight: 700; }
+    .timer-warn { border-color: #f87171; background: rgba(62,17,26,.95); }
+
+    #examOverlay { display: none; position: fixed; inset: 0; z-index: 5000; background: #040914; flex-direction: column; padding-top: 74px; }
+    #examOverlay.active { display: flex; }
+    #examFrameWrap { flex: 1; min-height: 0; overflow: hidden; }
+    #questionFrame { width: 100%; height: 100%; border: none; background: #040914; }
+
+    .report-box { background: #0a1221; border: 1px solid #29426c; border-radius: 12px; padding: 14px; line-height: 1.7; }
+    #snapshotView { margin: 0; background: #050b17; border-radius: 10px; padding: 12px; max-height: 280px; overflow: auto; font-family: monospace; white-space: pre-wrap; font-size: 12px; }
+
+    #shareModalWrap { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,0.8); z-index: 10005; }
+    #shareModalWrap.show { display: flex; }
+    #shareModal { background: #151f33; border-radius: 14px; max-width: 440px; width: 100%; padding: 22px; }
   </style>
 </head>
 <body>
-<div class="shell">
-  <!-- Scrollable question -->
-  <div class="q-area">
-    <div class="meta" id="metaText"></div>
-    <div class="q-text" id="qText"></div>
-    <div id="optsBox"></div>
-  </div>
-
-  <!-- Controls — natural flow, cut off on very small/split screens intentionally -->
-  <div class="ctrl">
-    <div class="pal-label">MCQ Questions</div>
-    <div class="palette" id="mcqPal"></div>
-    <div class="nav-row">
-      <button id="mp">&#8592; Back</button>
-      <span class="nlabel" id="mLabel">—</span>
-      <button id="mn">Next &#8594;</button>
+  <div id="nameModalWrap">
+    <div id="nameModal">
+      <div class="nm-title">⚡ ELECTROSTATICS EXAM ⚡</div>
+      <div class="nm-sub">Exam start karne ke liye apna naam likhein</div>
+      <input type="text" id="nameInput" placeholder="Full Name" maxlength="50" autocomplete="off" />
+      <div id="nameError"></div>
+      <button id="nameOkBtn">OK → Start</button>
     </div>
-    <hr class="divider">
-    <div class="pal-label">Objective / Reading</div>
-    <div class="palette" id="logPal"></div>
-    <div class="nav-row">
-      <button id="lp">&#8592; Back</button>
-      <span class="nlabel" id="lLabel">—</span>
-      <button id="ln">Next &#8594;</button>
-      <button class="sbtn" id="subBtn">Submit Exam</button>
+  </div>
+
+  <div id="timerBox"><small>Time left</small><br><b id="timer">90:00</b></div>
+
+  <div id="examOverlay">
+    <div id="examFrameWrap"><iframe id="questionFrame" title="Exam" allow="fullscreen"></iframe></div>
+  </div>
+
+  <div id="mainPage" class="hidden">
+    <div id="welcomeBanner">
+      <span class="name-left">👤 <span id="welcomeName"></span></span>
+      <span class="exam-title">⚡ PHYSICS - ELECTROSTATICS ⚡</span>
+      <span style="width:80px"></span>
     </div>
-    <div class="hint" id="hint"></div>
+    <div class="wrap">
+      <section class="card">
+        <h2>📘 Instructions</h2>
+        <p>➤ Total marks: <strong>50</strong> (20 MCQ × 1 mark each + 10 Subjective × 3 marks each).<br>
+        ➤ Inactive tab / app switch track hoga — 3 baar bahar jaane par <strong>-1 Negative Marks</strong> (penalty).<br>
+        ➤ Exam fullscreen mode me hoga. Split screen ya size chhota karne par warning aayegi.<br>
+        ➤ Subjective answers text box me likhein, apne aap save honge. Submit ke baad report generate hogi.<br>
+        ➤ Report me har MCQ ka sahi uttar aur explanation bhi milega.</p>
+      </section>
+
+      <section class="card">
+        <h1>📝 Online Exam</h1>
+        <div class="row">
+          <button id="examBtn">Start Exam (90 min)</button>
+          <span id="startGateLine"></span>
+        </div>
+        <p id="status"></p>
+      </section>
+
+      <section class="card">
+        <h2>📊 Result & Report</h2>
+        <div class="row hidden" id="afterSubmitActions">
+          <button class="secondary" id="openPdfBtn">Open Report Link</button>
+          <button class="secondary" id="shareBtn">Share Report</button>
+          <button class="secondary" id="viewResultBtn">View Result</button>
+          <button class="secondary" id="downloadResultBtn">Download Result</button>
+        </div>
+        <div id="resultView" class="report-box hidden"></div>
+      </section>
+
+      <section class="card">
+        <h2>📄 Report Preview (Live)</h2>
+        <pre id="snapshotView">{"status": "Exam start hote hi draft dikhega."}</pre>
+      </section>
+    </div>
   </div>
-</div>
-<div class="size-blocker" id="sizeBlocker" aria-live="polite">
-  <div class="size-box">
-    <strong>Screen size bahut chhota hai</strong>
-    <span>Exam content tabhi dikhega jab window normal size me ho. Split screen band karke ya browser area bada karke wapas aaiye.</span>
+
+  <div id="shareModalWrap">
+    <div id="shareModal">
+      <h3>✅ Exam Submit Ho Gayi</h3>
+      <p>Share Report button se result save/share karein.</p>
+      <button id="shareModalOk">OK</button>
+    </div>
   </div>
-</div>
 
-<script>
-  const SESSION_KEY    = "exam_active_session";
-  const ANSWER_KEY_PFX = "exam_answers_";
-  const MIN_EXAM_WIDTH = 360;
-  const MIN_EXAM_HEIGHT = 620;
+  <script>
+    (function(){
+      // ---- CONSTANTS ----
+      const EXAM_SECONDS = 90 * 60;
+      const LOCAL_UNLOCK_KEY = "exam_start_unlocked_forever";
+      const STORAGE = { active:"exam_active_session", answersPrefix:"exam_answers_", reportPrefix:"exam_report_" };
+      const MIN_EXAM_WIDTH = 360, MIN_EXAM_HEIGHT = 620;
+      const MIN_INACTIVE_MS = 500;
 
-  // ── QUESTIONS ──
-  // kind: "mcq" = MCQ only | "logic" = reading/objective only
-  const items = [
-    {
-      id:"s1", kind:"logic",
-      headline:"Objective 1 — Reading",
-      body:"Yeh sirf padaav hai. Ye objective MCQ me count nahi hoga."
-    },
-    {
-      id:"h2", kind:"mcq",
-      mcqTitle:"Web page par external JS ka sahi tarika?",
-      options:{ A:"<script src='app.js'><\/script>", B:"<javascript src='app.js'>", C:"<js href='app.js'>", D:"<link rel='script' href='app.js'>" },
-      correctOption:"A"
-    },
-    {
-      id:"m3", kind:"mcq",
-      mcqTitle:"CSS me text rang set karne waala property?",
-      options:{ A:"font-style", B:"text-color", C:"color", D:"font-color" },
-      correctOption:"C"
-    },
-    {
-      id:"h4", kind:"mcq",
-      mcqTitle:"HTML ka poora naam?",
-      options:{ A:"Hyper Text Markup Language", B:"High Tool Markup Language", C:"Hyper Tab Mark Language", D:"Home Text Model Language" },
-      correctOption:"A"
-    }
-  ];
+      // ---- Name gate ----
+      let studentName = "";
+      const nameModalWrap = document.getElementById("nameModalWrap");
+      const nameInput = document.getElementById("nameInput");
+      const nameError = document.getElementById("nameError");
+      const nameOkBtn = document.getElementById("nameOkBtn");
+      const mainPage = document.getElementById("mainPage");
+      const welcomeNameSpan = document.getElementById("welcomeName");
 
-  const mcqItems    = items.filter(it=>it.kind==="mcq");
-  const logicItems  = items.filter(it=>it.kind==="logic");
-  const mcqQuestions= mcqItems.map(it=>({id:it.id,question:it.mcqTitle,options:it.options,correctOption:it.correctOption}));
+      function submitName(){
+        const raw = nameInput.value.trim();
+        if(!raw){ nameError.textContent = "Naam likhna zaroori hai."; return; }
+        if(raw.length < 2){ nameError.textContent = "Kam se kam 2 characters."; return; }
+        studentName = raw.toUpperCase();
+        welcomeNameSpan.textContent = studentName;
+        nameModalWrap.style.display = "none";
+        mainPage.classList.remove("hidden");
+        document.body.classList.add("pre-exam");
+        examBtn.disabled = true;
+        updateStartGateUi();
+      }
+      nameOkBtn.addEventListener("click", submitName);
+      nameInput.addEventListener("keydown", e => { if(e.key === "Enter") submitName(); });
 
-  const params   = new URLSearchParams(window.location.search);
-  let sessionId  = params.get("session")||localStorage.getItem(SESSION_KEY)||"";
-  if(!sessionId) sessionId=`fallback_${Date.now()}`;
-  localStorage.setItem(SESSION_KEY,sessionId);
-  const storageKey=ANSWER_KEY_PFX+sessionId;
+      // ---- DOM elements ----
+      const examBtn = document.getElementById("examBtn");
+      const statusEl = document.getElementById("status");
+      const timerBox = document.getElementById("timerBox");
+      const timerEl = document.getElementById("timer");
+      const startGateLine = document.getElementById("startGateLine");
+      const frame = document.getElementById("questionFrame");
+      const examOverlay = document.getElementById("examOverlay");
+      const afterSubmitActions = document.getElementById("afterSubmitActions");
+      const snapshotView = document.getElementById("snapshotView");
+      const shareModalWrap = document.getElementById("shareModalWrap");
+      const shareModalOk = document.getElementById("shareModalOk");
+      const openPdfBtn = document.getElementById("openPdfBtn");
+      const shareBtn = document.getElementById("shareBtn");
+      const viewResultBtn = document.getElementById("viewResultBtn");
+      const downloadResultBtn = document.getElementById("downloadResultBtn");
 
-  let mcqIdx=0, logIdx=0, activeSection="mcq";
-  let state={ sessionId, mcqQuestions, answers:{} };
-  let focusLossReported=false;
+      let examRunning = false, submitted = false, startAtMs = 0, submitAtMs = 0;
+      let inactiveStartMs = 0, sid = "", timerInt = null, gateTimerInt = null, reportUrl = "";
+      let viewportWasTooSmall = false, fullscreenWasOn = false, examViewportBase = null;
+      let parentFocusLost = false, focusPollInt = null;
 
-  function loadState(){ const raw=localStorage.getItem(storageKey); if(!raw)return; try{ const p=JSON.parse(raw); if(p&&p.answers)state.answers=p.answers||{}; }catch{} }
-  function persist(){ localStorage.setItem(storageKey,JSON.stringify({sessionId:state.sessionId,questions:state.mcqQuestions,answers:state.answers,updatedAt:new Date().toISOString()})); document.getElementById("hint").textContent=`Saved ${new Date().toLocaleTimeString()}`; }
-  function esc(t){ return String(t).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;"); }
+      // Report object
+      let report = {
+        studentName: "",
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        userAgent: navigator.userAgent,
+        exam: { durationSeconds: EXAM_SECONDS, startAt: null, submitAt: null, submitReason: null, sessionId: null },
+        inactiveSessions: [],
+        events: [],
+        result: { totalQuestions:0, attempted:0, correct:0, wrong:0, unattempted:0, baseScore:0, leaveIncidentCount:0, negativeMarks:0, finalScore:0, selections:[] },
+        summary: { totalInactiveMs:0 }
+      };
 
-  function renderQ(){
-    const meta=document.getElementById("metaText");
-    const qEl =document.getElementById("qText");
-    const oEl =document.getElementById("optsBox");
-    if(activeSection==="mcq"){
-      const it=mcqItems[mcqIdx]; if(!it)return;
-      meta.textContent=`MCQ ${mcqIdx+1} of ${mcqItems.length}`;
-      qEl.textContent=it.mcqTitle;
-      const sel=state.answers[it.id]||"";
-      oEl.innerHTML=Object.entries(it.options).map(([k,v])=>
-        `<label class="opt"><input type="radio" name="ans" value="${k}" ${k===sel?"checked":""}><strong>${esc(k)}.</strong><span>${esc(v)}</span></label>`
-      ).join("");
-    } else {
-      const it=logicItems[logIdx]; if(!it)return;
-      meta.textContent=`Objective ${logIdx+1} of ${logicItems.length}`;
-      qEl.textContent=it.headline;
-      oEl.innerHTML=`<div class="logic-body">${esc(it.body)}</div>`;
-    }
-  }
+      // helpers
+      function nowIso(){ return new Date().toISOString(); }
+      function mmss(sec){ const s=Math.max(0,Math.floor(sec)); return `${String(Math.floor(s/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`; }
+      function fmtDate(ts){ return new Date(ts||Date.now()).toLocaleString(); }
+      function fmtTime(ts){ return new Date(ts||Date.now()).toLocaleTimeString(); }
+      function fmtDur(ms){ const s=Math.floor(ms/1000), m=Math.floor(s/60), r=s%60; return `${m}m ${r}s`; }
+      function esc(str){ return String(str).replace(/[&<>]/g, function(m){ if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m; }); }
+      function renderSnapshot(){ snapshotView.textContent = JSON.stringify({ student:report.studentName, examStatus:report.exam.submitAt?"submitted":"ongoing", score:report.result.finalScore, negativeMarks:report.result.negativeMarks },null,2); }
+      function saveDraft(){ if(sid) localStorage.setItem(STORAGE.reportPrefix+sid, JSON.stringify(report)); }
+      function addEvent(type,details={}){ report.events.push({ at:nowIso(), type, ...details }); saveDraft(); renderSnapshot(); }
+      function currentViewport(){ const vv=window.visualViewport; return { width:Math.round(vv?.width||window.innerWidth), height:Math.round(vv?.height||window.innerHeight) }; }
+      function isExamViewportTooSmall(){ const vp=currentViewport(); return vp.width<MIN_EXAM_WIDTH || vp.height<MIN_EXAM_HEIGHT; }
 
-  function renderMcqPal(){
-    const pal=document.getElementById("mcqPal"); pal.innerHTML="";
-    mcqItems.forEach((q,i)=>{
-      const b=document.createElement("button"); b.type="button"; b.className="pill";
-      if(state.answers[q.id]) b.classList.add("answered");
-      if(activeSection==="mcq"&&i===mcqIdx) b.classList.add("am");
-      b.textContent=String(i+1);
-      b.addEventListener("click",()=>{ mcqIdx=i; activeSection="mcq"; render(); });
-      pal.appendChild(b);
-    });
-    document.getElementById("mLabel").textContent=mcqItems.length?`${mcqIdx+1}/${mcqItems.length}`:"—";
-    document.getElementById("mp").disabled=mcqIdx===0;
-    document.getElementById("mn").disabled=mcqIdx===mcqItems.length-1;
-  }
+      // Start gate (disabled for testing => always true)
+      function isStartGateOpen(){ return true; }
+      function updateStartGateUi(){
+        if(examRunning) return;
+        if(isExamViewportTooSmall()){ examBtn.disabled=true; startGateLine.textContent="Screen size chhota hai → bada karein."; return; }
+        if(isStartGateOpen()){ examBtn.disabled=false; startGateLine.textContent=""; if(gateTimerInt)clearInterval(gateTimerInt); gateTimerInt=null; return; }
+        examBtn.disabled=true;
+        const rem=Math.max(0, Math.ceil((new Date().setHours(16,40,0,0)-Date.now())/1000));
+        startGateLine.textContent=`Start locked: ~${Math.floor(rem/60)} min`;
+        if(!gateTimerInt) gateTimerInt=setInterval(updateStartGateUi,500);
+      }
 
-  function renderLogPal(){
-    const pal=document.getElementById("logPal"); pal.innerHTML="";
-    logicItems.forEach((q,i)=>{
-      const b=document.createElement("button"); b.type="button"; b.className="pill";
-      if(activeSection==="logic"&&i===logIdx) b.classList.add("al");
-      b.textContent=String(i+1);
-      b.addEventListener("click",()=>{ logIdx=i; activeSection="logic"; render(); });
-      pal.appendChild(b);
-    });
-    const has=logicItems.length>0;
-    document.getElementById("lLabel").textContent=has?`${logIdx+1}/${logicItems.length}`:"—";
-    document.getElementById("lp").disabled=!has||logIdx===0;
-    document.getElementById("ln").disabled=!has||logIdx===logicItems.length-1;
-  }
+      // Inactivity track
+      function markInactiveStart(reason){ if(examRunning && !submitted && !inactiveStartMs){ inactiveStartMs=Date.now(); addEvent("inactive_start",{reason}); } }
+      function markInactiveEnd(reason){
+        if(!examRunning || submitted || !inactiveStartMs) return;
+        const ms = Date.now() - inactiveStartMs;
+        inactiveStartMs=0;
+        if(ms<MIN_INACTIVE_MS){ addEvent("brief_focus_interruption",{reason,ms}); return; }
+        report.inactiveSessions.push({ leftAt:new Date(ms), returnedAt:nowIso(), awayMs:ms });
+        report.summary.totalInactiveMs += ms;
+        addEvent("inactive_end",{reason, awaySec:Math.round(ms/1000)});
+      }
+      function checkParentFocus(){
+        if(!examRunning || submitted) return;
+        if(document.hasFocus()){ if(parentFocusLost){ parentFocusLost=false; markInactiveEnd("focus_returned"); } }
+        else { if(!parentFocusLost){ parentFocusLost=true; markInactiveStart("focus_lost"); } }
+      }
+      document.addEventListener("visibilitychange",()=>{
+        if(!examRunning||submitted) return;
+        if(document.hidden) markInactiveStart("tab_hidden");
+        else markInactiveEnd("tab_visible");
+      });
+      window.addEventListener("blur",()=>{ if(examRunning && !submitted) markInactiveStart("window_blur"); });
+      window.addEventListener("focus",()=>{ if(examRunning && !submitted) markInactiveEnd("window_focus"); });
 
-  function render(){ renderQ(); renderMcqPal(); renderLogPal(); }
+      // Fullscreen & size
+      function requestFS(){ if(document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(e=>addEvent("fullscreen_fail")); }
+      function handleFullscreenChange(){ if(!examRunning||submitted) return; if(document.fullscreenElement) fullscreenWasOn=true; else if(fullscreenWasOn){ fullscreenWasOn=false; addEvent("fullscreen_exited"); } }
+      document.addEventListener("fullscreenchange", handleFullscreenChange);
+      window.addEventListener("resize",()=>{ if(examRunning&&!submitted && isExamViewportTooSmall()!==viewportWasTooSmall) addEvent(isExamViewportTooSmall()?"viewport_small":"viewport_ok"); viewportWasTooSmall=isExamViewportTooSmall(); updateStartGateUi(); });
 
-  function currentViewport(){
-    const vv=window.visualViewport;
-    return {
-      width:Math.round((vv&&vv.width)||window.innerWidth||document.documentElement.clientWidth||0),
-      height:Math.round((vv&&vv.height)||window.innerHeight||document.documentElement.clientHeight||0)
-    };
-  }
+      // ---- BUILD QUESTIONS IFRAME CONTENT (20 MCQ + 10 SUBJECTIVE) ----
+      function buildQuestionsHtml(sessionId){
+        // 20 Physics Electrostatics MCQs with correct option & explanation
+        const mcqs = [
+          { id:"mcq1", text:"The intensity of electric field at any point on the surface of a charged conductor is:", options:{ A:"Zero", B:"Perpendicular to the surface", C:"Tangential to the surface", D:"at 45° to the surface" }, correct:"B", explanation:"Electric field just outside a charged conductor is perpendicular to surface; otherwise charges would move." },
+          { id:"mcq2", text:"Torque experienced by electric dipole of dipole moment P placed in electric field E is:", options:{ A:"P x E", B:"P / E", C:"P . E", D:"none" }, correct:"A", explanation:"Torque = vector cross product p × E, aligns dipole with field." },
+          { id:"mcq3", text:"Total electric flux over a closed surface is ……. the total charge enclosed (Gauss law):", options:{ A:"1/ε₀ times", B:"1/4π times", C:"ε₀ times", D:"Zero times" }, correct:"A", explanation:"Gauss's law: Φ = q_enclosed / ε₀." },
+          { id:"mcq4", text:"Electrostatic potential on the perpendicular bisector due to an electric dipole is:", options:{ A:"Zero", B:"1", C:"Infinite", D:"Negative" }, correct:"A", explanation:"Potential due to +q and -q cancel at equatorial line." },
+          { id:"mcq5", text:"Unit of capacitance of capacitor is:", options:{ A:"Farad", B:"hennery", C:"tesla", D:"weber" }, correct:"A", explanation:"Farad = Coulomb/Volt, SI unit of capacitance." },
+          { id:"mcq6", text:"Quantity that remains same in parallel combination of capacitors is:", options:{ A:"Charge", B:"Energy", C:"Potential", D:"All" }, correct:"C", explanation:"Parallel combination me voltage same hota hai har capacitor par." },
+          { id:"mcq7", text:"The capacity of parallel plate capacitor increases when:", options:{ A:"area decreased", B:"area increased or dielectric inserted", C:"distance increases", D:"None" }, correct:"B", explanation:"C = εA/d, area badhane ya dielectric se capacitance badhti hai." },
+          { id:"mcq8", text:"Coulombian force is:", options:{ A:"Central force", B:"Electric force", C:"Both A and B", D:"None" }, correct:"C", explanation:"Coulomb force acts along line joining charges → central & electric." },
+          { id:"mcq9", text:"The value of εᵣ in air is:", options:{ A:"Zero", B:"Infinity", C:"1", D:"9×10⁹" }, correct:"C", explanation:"Relative permittivity of air/vacuum ≈ 1." },
+          { id:"mcq10", text:"Surface charge density σ, electric field near conductor is:", options:{ A:"σ/ε₀", B:"σ/2ε₀", C:"σ/3ε₀", D:"2σ/ε₀" }, correct:"A", explanation:"E = σ/ε₀ for conductor surface (normal component)." },
+          { id:"mcq11", text:"Relative permittivity εᵣ of a medium equals:", options:{ A:"E/E₀", B:"E×E₀", C:"E+E₀", D:"E−E₀" }, correct:"A", explanation:"εᵣ = E₀/E (ratio of field in vacuum to medium)." },
+          { id:"mcq12", text:"Unit of electric field intensity is:", options:{ A:"NC", B:"N/C", C:"Vm", D:"C/N" }, correct:"B", explanation:"N/C (Newton per Coulomb) or V/m." },
+          { id:"mcq13", text:"Two electric field lines intersect at what angle?", options:{ A:"90°", B:"45°", C:"30°", D:"Do not intersect" }, correct:"D", explanation:"Field lines never intersect because at intersection field would have two directions." },
+          { id:"mcq14", text:"If charge on object is doubled then electric field becomes:", options:{ A:"Thrice", B:"Unchanged", C:"Double", D:"Half" }, correct:"C", explanation:"E ∝ q, so doubling charge doubles field." },
+          { id:"mcq15", text:"Work 20 J to carry 2 C charge between points. Potential difference (V) will be:", options:{ A:"10", B:"20", C:"5", D:"2" }, correct:"A", explanation:"V = W/q = 20J/2C = 10V." },
+          { id:"mcq16", text:"Surface density of charge is:", options:{ A:"Total charge / Total area", B:"Total charge / Total volume", C:"Total charge × area", D:"Charge × volume" }, correct:"A", explanation:"σ = Q / A (charge per unit area)." },
+          { id:"mcq17", text:"Electrostatic field is:", options:{ A:"Conservative", B:"Non-conservative", C:"Somewhere conservative", D:"None" }, correct:"A", explanation:"Work done in closed loop = 0, hence conservative." },
+          { id:"mcq18", text:"S.I. unit of electric flux is:", options:{ A:"Weber", B:"Nm²/C", C:"Newton/m", D:"m²/s" }, correct:"B", explanation:"Nm²/C (or V·m)." },
+          { id:"mcq19", text:"Value of 1/(4πε₀) is:", options:{ A:"9×10⁹ Nm²/C²", B:"8.85×10⁻¹²", C:"9×10⁻⁹", D:"Zero" }, correct:"A", explanation:"Coulomb constant k = 9×10⁹ Nm²/C²." },
+          { id:"mcq20", text:"Permittivity of free space ε₀ is:", options:{ A:"9×10⁹ mF⁻¹", B:"8.85×10⁻¹² F/m", C:"1.6×10⁻¹⁹ C", D:"None" }, correct:"B", explanation:"ε₀ = 8.854×10⁻¹² F/m." }
+        ];
+        const subjective = [
+          { id:"sub1", q:"Define electric dipole moment. Write its SI unit." },
+          { id:"sub2", q:"Define Electric Flux and write its SI unit." },
+          { id:"sub3", q:"What do you mean by Quantization of Charge?" },
+          { id:"sub4", q:"State any two properties of Electric Lines of Force." },
+          { id:"sub5", q:"Define Electrostatic Shielding and give one practical example." },
+          { id:"sub6", q:"State and explain the Principle of Superposition of charges." },
+          { id:"sub7", q:"Why do two electric field lines never intersect each other?" },
+          { id:"sub8", q:"Define Dielectric Strength and Permittivity of a medium." },
+          { id:"sub9", q:"Define Electric Dipole Moment and write its S.I. unit." },
+          { id:"sub10", q:"State Gauss's Theorem of Electrostatics." }
+        ];
 
-  function updateSizeBlocker(){
-    const vp=currentViewport();
-    const tooSmall=vp.width<MIN_EXAM_WIDTH || vp.height<MIN_EXAM_HEIGHT;
-    document.getElementById("sizeBlocker").classList.toggle("show",tooSmall);
-  }
-
-  document.getElementById("optsBox").addEventListener("change",e=>{
-    if(!e.target||e.target.name!=="ans"||activeSection!=="mcq")return;
-    const it=mcqItems[mcqIdx]; if(!it)return;
-    state.answers[it.id]=e.target.value; persist(); renderMcqPal();
-  });
-
-  document.getElementById("mp").addEventListener("click",()=>{ if(mcqIdx>0){mcqIdx--;activeSection="mcq";render();} });
-  document.getElementById("mn").addEventListener("click",()=>{ if(mcqIdx<mcqItems.length-1){mcqIdx++;activeSection="mcq";render();} });
-  document.getElementById("lp").addEventListener("click",()=>{ if(logIdx>0){logIdx--;activeSection="logic";render();} });
-  document.getElementById("ln").addEventListener("click",()=>{ if(logIdx<logicItems.length-1){logIdx++;activeSection="logic";render();} });
-
-  document.getElementById("subBtn").addEventListener("click",()=>{
-    if(window.parent&&window.parent!==window) window.parent.postMessage("submit_exam","*");
-  });
-
-  function postToParent(msg){
-    if(window.parent&&window.parent!==window) window.parent.postMessage(msg,"*");
-  }
-
-  window.addEventListener("blur",()=>{
-    if(focusLossReported)return;
-    focusLossReported=true;
-    postToParent("exam_focus_lost");
-  });
-
-  window.addEventListener("focus",()=>{
-    if(focusLossReported){
-      focusLossReported=false;
-      postToParent("exam_focus_returned");
-    }
-  });
-
-  window.addEventListener("resize",updateSizeBlocker);
-  window.addEventListener("orientationchange",()=>setTimeout(updateSizeBlocker,250));
-  if(window.visualViewport) window.visualViewport.addEventListener("resize",updateSizeBlocker);
-
-  loadState(); persist(); render(); updateSizeBlocker();
-</script>
-</body>
-</html>
+        return `
