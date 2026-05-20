@@ -85,7 +85,7 @@
     #timerBox.timer-warn{border-color:#f87171;color:#fecaca;background:rgba(62,17,26,.95)}
     #timer{font-size:clamp(20px,5vw,26px);letter-spacing:2px;font-weight:700}
     #status{min-height:20px;font-size:clamp(13px,3.5vw,15px);color:#c8d7f8;margin-top:6px}
-    #startGateLine{font-size:clamp(12px,3vw,14px);color:#a8bdf0;margin-left:10px;display:inline-block;vertical-align:middle}
+    #startGateLine{font-size:clamp(13px,3.5vw,15px);color:#fda4af;margin-left:10px;display:inline-block;vertical-align:middle;font-weight:600}
     .report-box{background:#0a1221;border:1px solid #29426c;border-radius:12px;padding:14px;line-height:1.7}
     .ok{color:#86efac}.bad{color:#fda4af}.warn{color:#fcd34d}
     #snapshotView{
@@ -231,8 +231,8 @@
       active:"exam_active_session", answersPrefix:"exam_answers_",
       reportPrefix:"exam_report_", reportLinks:"exam_temp_links"
     };
-    const MIN_EXAM_WIDTH = 320;
-    const MIN_EXAM_HEIGHT = 480;
+    const MIN_EXAM_WIDTH = 420;
+    const MIN_EXAM_HEIGHT = 560;
     const MIN_INACTIVE_SESSION_MS = 500;
 
     const ANSWER_EXPLANATIONS = {
@@ -331,7 +331,11 @@
     function getQUrl(){return new URL("./questions.html",window.location.href).toString();}
     function todayGateMs(){const d=new Date();d.setHours(START_HOUR,START_MIN,0,0);return d.getTime();}
     function currentViewport(){const vv=window.visualViewport;return{width:Math.round((vv&&vv.width)||window.innerWidth||0),height:Math.round((vv&&vv.height)||window.innerHeight||0)};}
-    function isExamViewportTooSmall(){const vp=currentViewport();return vp.width<MIN_EXAM_WIDTH||vp.height<MIN_EXAM_HEIGHT;}
+    function isExamViewportTooSmall(){
+      const vp=currentViewport();
+      // Dono cases me width AUR height dono check — split screen pakadne ke liye
+      return vp.width<MIN_EXAM_WIDTH || vp.height<MIN_EXAM_HEIGHT;
+    }
     function viewportGateMessage(){const vp=currentViewport();return `Screen chhota hai (${vp.width}x${vp.height}). Split screen band karein.`;}
     function isStartGateOpen(){return true;}
 
@@ -342,8 +346,9 @@
         startGateLine.textContent=viewportGateMessage();
         return;
       }
-      // Screen theek hai — message clear karo, button enable karo
+      // Screen theek hai — message aur status dono clear karo
       startGateLine.textContent="";
+      statusEl.textContent="";
       if(isStartGateOpen()){
         examBtn.disabled=false;
         if(gateTimerInt)clearInterval(gateTimerInt);
@@ -587,7 +592,7 @@ li:last-child{border-bottom:none}
       requestFS().then(()=>{fullscreenWasOn=!!document.fullscreenElement;examViewportBase=currentViewport();addEvent("fullscreen_ok");}).catch(()=>addEvent("fullscreen_fail"));tryOL();
       const endTs=startAtMs+EXAM_SECONDS*1000;
       if(timerInt)clearInterval(timerInt);
-      timerInt=setInterval(()=>{const rem=Math.ceil((endTs-Date.now())/1000);timerEl.textContent=mmss(rem);timerBox.classList.toggle("timer-warn",rem>0&&rem<=10*60);if(rem<=0){clearInterval(timerInt);timerEl.textContent="00:00";}},300);
+      timerInt=setInterval(()=>{const rem=Math.ceil((endTs-Date.now())/1000);timerEl.textContent=mmss(rem);timerBox.classList.toggle("timer-warn",rem>0&&rem<=10*60);if(rem<=0){clearInterval(timerInt);timerEl.textContent="00:00";submitExam("time_up");}},300);
       if(focusPollInt)clearInterval(focusPollInt);
       focusPollInt=setInterval(checkParentFocus,250);
     }
@@ -630,7 +635,7 @@ li:last-child{border-bottom:none}
       pwModalWrap.classList.add("show");
       setTimeout(()=>pwInput.focus(),100);
     }
-    function hidePasswordModal(){ pwModalWrap.classList.remove("show"); }
+    function hidePasswordModal(){ pwModalWrap.classList.remove("show"); statusEl.textContent=""; }
     function confirmPassword(){
       const val=pwInput.value.trim();
       if(!val){ pwError.textContent="Password khali nahi ho sakta."; return; }
