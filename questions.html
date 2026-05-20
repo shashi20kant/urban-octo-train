@@ -153,8 +153,8 @@
 <script>
   const SESSION_KEY    = "exam_active_session";
   const ANSWER_KEY_PFX = "exam_answers_";
-  const MIN_EXAM_WIDTH = 280;
-  const MIN_EXAM_HEIGHT = 0; // disabled
+  const MIN_EXAM_WIDTH = 360;
+  const MIN_EXAM_HEIGHT = 500; // portrait me height
 
   // ── 20 MCQ QUESTIONS ──
   const mcqData = [
@@ -285,7 +285,8 @@
   function updateSizeBlocker(){
     const vp=currentViewport();
     // landscape me rotate blocker handle kar raha hai, yahan sirf portrait-too-small check
-    const tooSmall=vp.width<MIN_EXAM_WIDTH;
+    const portrait=vp.height>=vp.width;
+    const tooSmall=portrait&&(vp.width<MIN_EXAM_WIDTH||vp.height<MIN_EXAM_HEIGHT);
     document.getElementById("sizeBlocker").classList.toggle("show",tooSmall);
   }
 
