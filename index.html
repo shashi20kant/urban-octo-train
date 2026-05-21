@@ -46,7 +46,6 @@
     }
     #nameOkBtn:active{opacity:.85}
 
-    /* Naam LEFT, Subject CENTER */
     #welcomeBanner{
       text-align:left;padding:14px 14px 2px;
       font-size:clamp(16px,4.5vw,22px);font-weight:700;
@@ -104,7 +103,6 @@
     #shareModal p{font-size:15px}
     #shareModal button{margin-top:14px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;width:100%;padding:14px;font-weight:700;border-radius:10px;border:none;cursor:pointer;font-size:16px}
 
-    /* ── Password Modal ── */
     #pwModalWrap{
       position:fixed;inset:0;z-index:19000;
       display:none;align-items:center;justify-content:center;
@@ -159,8 +157,6 @@
     </div>
   </div>
 
-
-  <!-- Password Modal -->
   <div id="pwModalWrap">
     <div id="pwModal">
       <div class="pw-title">🔐 Exam Password</div>
@@ -171,6 +167,7 @@
       <button type="button" id="pwCancelBtn">Cancel</button>
     </div>
   </div>
+
   <div id="examOverlay">
     <div id="examFrameWrap">
       <iframe id="questionFrame" title="Questions" scrolling="no"></iframe>
@@ -231,9 +228,14 @@
       active:"exam_active_session", answersPrefix:"exam_answers_",
       reportPrefix:"exam_report_", reportLinks:"exam_temp_links"
     };
-    const MIN_EXAM_WIDTH = 420;
+    const MIN_EXAM_WIDTH  = 420;
     const MIN_EXAM_HEIGHT = 560;
     const MIN_INACTIVE_SESSION_MS = 500;
+
+    // ── VIEWPORT LOCK — exam start hone par size save hoga ──
+    // Start click ke waqt jo size hogi wahi lock — zyada ya kam koi bhi change to hide
+    let lockedViewport = null;   // { width, height } — startExam() ke waqt set hoga
+    const RESIZE_TOLERANCE = 0;  // 0 = zero tolerance, koi bhi pixel change allowed nahi
 
     const ANSWER_EXPLANATIONS = {
       "q1" :"Electric field on conductor surface is always ⊥ (perpendicular). Tangential component = 0, else electrons would move.",
@@ -331,13 +333,40 @@
     function getQUrl(){return new URL("./questions.html",window.location.href).toString();}
     function todayGateMs(){const d=new Date();d.setHours(START_HOUR,START_MIN,0,0);return d.getTime();}
     function currentViewport(){const vv=window.visualViewport;return{width:Math.round((vv&&vv.width)||window.innerWidth||0),height:Math.round((vv&&vv.height)||window.innerHeight||0)};}
-    function isExamViewportTooSmall(){
-      const vp=currentViewport();
-      // Dono cases me width AUR height dono check — split screen pakadne ke liye
-      return vp.width<MIN_EXAM_WIDTH || vp.height<MIN_EXAM_HEIGHT;
-    }
+    function isExamViewportTooSmall(){const vp=currentViewport();return vp.width<MIN_EXAM_WIDTH||vp.height<MIN_EXAM_HEIGHT;}
     function viewportGateMessage(){const vp=currentViewport();return `Screen chhota hai (${vp.width}x${vp.height}). Split screen band karein.`;}
     function isStartGateOpen(){return true;}
+
+    // ── VIEWPORT LOCK CHECK ──
+    // Start click ke waqt jo size lock hui — us se koi bhi fark hua to iframe hide
+    // Wapas same size aaya to iframe wapas dikhe
+    let vpViolationActive = false;
+
+    function checkViewportLock(){
+      if(!examRunning||submitted||!lockedViewport)return;
+      const vp = currentViewport();
+      const widthDiff  = Math.abs(vp.width  - lockedViewport.width);
+      const heightDiff = Math.abs(vp.height - lockedViewport.height);
+      const resized    = widthDiff > RESIZE_TOLERANCE || heightDiff > RESIZE_TOLERANCE;
+
+      if(resized && !vpViolationActive){
+        vpViolationActive = true;
+        frame.style.visibility = "hidden";
+        frame.style.pointerEvents = "none";
+        addEvent("viewport_lock_violation",{locked:lockedViewport,current:vp,widthDiff,heightDiff});
+      } else if(!resized && vpViolationActive){
+        vpViolationActive = false;
+        frame.style.visibility = "visible";
+        frame.style.pointerEvents = "auto";
+        addEvent("viewport_lock_restored",{current:vp});
+      }
+
+      try{
+        frame.contentWindow.postMessage(
+          resized ? "viewport_resized" : "viewport_normal", "*"
+        );
+      }catch(err){}
+    }
 
     function updateStartGateUi(){
       if(examRunning)return;
@@ -346,7 +375,6 @@
         startGateLine.textContent=viewportGateMessage();
         return;
       }
-      // Screen theek hai — message aur status dono clear karo
       startGateLine.textContent="";
       statusEl.textContent="";
       if(isStartGateOpen()){
@@ -373,11 +401,17 @@
     function startParentFocusLoss(reason){if(!examRunning||submitted||parentFocusLost)return;parentFocusLost=true;markInactiveStart(reason);}
     function endParentFocusLoss(reason){if(parentFocusLost){parentFocusLost=false;markInactiveEnd(reason);}}
     function checkParentFocus(){if(!examRunning||submitted)return;if(document.hasFocus())endParentFocusLoss("focus_returned");else startParentFocusLoss("focus_lost");}
+
     function handleViewportChange(){
       const tooSmall=isExamViewportTooSmall();
       if(examRunning&&!submitted&&tooSmall!==viewportWasTooSmall)addEvent(tooSmall?"viewport_too_small":"viewport_restored",currentViewport());
-      viewportWasTooSmall=tooSmall;detectSystemUiReveal();updateStartGateUi();
+      viewportWasTooSmall=tooSmall;
+      detectSystemUiReveal();
+      updateStartGateUi();
+      // ── Viewport lock check — exam chal raha ho to ──
+      checkViewportLock();
     }
+
     function detectSystemUiReveal(){
       if(!examRunning||submitted)return;
       const vp=currentViewport();
@@ -393,6 +427,7 @@
       }
       if(!suspicious){if(systemUiRevealTimer){clearTimeout(systemUiRevealTimer);systemUiRevealTimer=null;}if(systemUiWasRevealed){systemUiWasRevealed=false;addEvent("system_ui_restored",currentViewport());}}
     }
+
     function handleFullscreenChange(){
       if(!examRunning||submitted)return;
       if(document.fullscreenElement){fullscreenWasOn=true;return;}
@@ -440,7 +475,7 @@
       const r=d.machineReport.result;
       const awayHtml=d.awayLines.length?`<ul>${d.awayLines.map(l=>`<li>${esc(l)}</li>`).join("")}</ul>`:`<p class="none-text">Kabhi bahar nahi gaye ✓</p>`;
       const awaySection=includeAwayRecord?`<div class="section"><div class="sec-head">Bahar Jane Ka Record</div>${awayHtml}</div>`:"";
-      const suspTypes=new Set(["brief_focus_interruption","viewport_too_small","fullscreen_exited","system_ui_revealed","frame_focus_shift"]);
+      const suspTypes=new Set(["brief_focus_interruption","viewport_too_small","fullscreen_exited","system_ui_revealed","frame_focus_shift","viewport_lock_violation"]);
       const susp=(d.machineReport.events||[]).filter(ev=>suspTypes.has(ev.type));
       const suspSection=susp.length?`<div class="section"><div class="sec-head">⚠ Suspicious Signals</div><ul>${susp.map((ev,i)=>`<li>${i+1}. ${esc(fmtTime(ev.at))} — ${esc(ev.type)}</li>`).join("")}</ul></div>`:"";
 
@@ -507,9 +542,6 @@ body{font-family:Arial,sans-serif;margin:0;padding:16px;background:#0b1220;color
 .rh-name{font-size:clamp(20px,5vw,28px);font-weight:700;background:linear-gradient(90deg,#34d399,#22d3ee,#a78bfa,#fb7185);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .rh-sub{font-size:14px;color:#7dd3fc;margin-top:4px;font-weight:600}
 .rh-date{font-size:13px;color:#64748b;margin-top:2px}
-.rh-timing{display:flex;flex-wrap:wrap;justify-content:center;gap:6px 14px;margin-top:8px;font-size:13px;color:#94a3b8}
-.rt-item b{color:#e2e8f0}
-.rt-sep{color:#334155}
 .section{margin-bottom:22px}
 .sec-head{font-size:16px;font-weight:700;color:#93c5fd;border-bottom:1px solid #1e3a5f;padding-bottom:6px;margin-bottom:10px}
 .summary-grid{background:#0d1f38;border-radius:10px;padding:12px 14px}
@@ -584,6 +616,11 @@ li:last-child{border-bottom:none}
       viewportWasTooSmall=false;fullscreenWasOn=false;
       examViewportBase=currentViewport();systemUiWasRevealed=false;
       if(systemUiRevealTimer){clearTimeout(systemUiRevealTimer);systemUiRevealTimer=null;}
+
+      // ── VIEWPORT LOCK: exam start hote hi current size save karo ──
+      lockedViewport = currentViewport();
+      addEvent("viewport_locked", lockedViewport);
+
       examRunning=true;sid=`sess_${Date.now()}`;localStorage.setItem(STORAGE.active,sid);
       startAtMs=Date.now();report.exam.startAt=new Date(startAtMs).toISOString();report.exam.sessionId=sid;
       addEvent("exam_started");enterExamOnlyView();
@@ -604,6 +641,12 @@ li:last-child{border-bottom:none}
       if(timerInt)clearInterval(timerInt);
       if(focusPollInt){clearInterval(focusPollInt);focusPollInt=null;}
       if(document.fullscreenElement&&document.exitFullscreen)document.exitFullscreen().catch(()=>{});
+      // ── Submit hone par viewport lock clear karo — iframe wapas dikhe ──
+      lockedViewport = null;
+      vpViolationActive = false;
+      frame.style.visibility = "visible";
+      frame.style.pointerEvents = "auto";
+      try{ frame.contentWindow.postMessage("viewport_normal","*"); }catch(err){}
       report.exam.submitAt=new Date(submitAtMs).toISOString();report.exam.submitReason=reason;
       addEvent("exam_submitted",{reason});computeResult();saveDraft();exitExamOnlyView();
       examBtn.disabled=false;examBtn.textContent="Start Exam";
@@ -618,18 +661,15 @@ li:last-child{border-bottom:none}
       }
       if(e.data==="exam_focus_returned")markInactiveEnd("frame_focus_returned");
     });
-    // Password modal elements
+
     const pwModalWrap = document.getElementById("pwModalWrap");
     const pwInput     = document.getElementById("pwInput");
     const pwError     = document.getElementById("pwError");
     const pwOkBtn     = document.getElementById("pwOkBtn");
     const pwCancelBtn = document.getElementById("pwCancelBtn");
-
-    // In-memory flag — refresh hone par reset hoga, cancel pe nahi
     let pwVerified = false;
 
     function showPasswordModal(){
-      // Already verified hai to seedha start karo
       if(pwVerified){ startExam(); return; }
       pwInput.value=""; pwError.textContent="";
       pwModalWrap.classList.add("show");
@@ -643,7 +683,7 @@ li:last-child{border-bottom:none}
         pwError.textContent="❌ Galat password! Teacher se confirm karein.";
         pwInput.value=""; pwInput.focus(); return;
       }
-      pwVerified=true;       // memory me save — tab band/refresh tak rahega
+      pwVerified=true;
       hidePasswordModal();
       startExam();
     }
