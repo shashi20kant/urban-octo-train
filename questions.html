@@ -105,27 +105,54 @@
     .size-box strong{ display:block; margin-bottom:8px; color:#fda4af; font-size:18px; }
     .size-box span{ color:#cbd5e1; line-height:1.55; font-size:14px; }
 
-    /* ── VIEWPORT LOCK BLOCKER — naya ── */
+    /* ── VIEWPORT LOCK BLOCKER ── */
     #vpLockBlocker{
       position:fixed; inset:0; z-index:999998;
       display:none; flex-direction:column;
       align-items:center; justify-content:center;
-      background:#020617; text-align:center; padding:28px; gap:16px;
+      background:#040a14; text-align:center; padding:28px; gap:14px;
     }
     #vpLockBlocker.show{ display:flex; }
-    #vpLockBlocker .vp-icon{ font-size:56px; }
+    #vpLockBlocker .vp-icon{
+      font-size:62px;
+      animation: vp-pulse 1.5s ease-in-out infinite;
+    }
+    @keyframes vp-pulse{
+      0%,100%{ transform:scale(1); opacity:1; }
+      50%{ transform:scale(1.12); opacity:0.8; }
+    }
     #vpLockBlocker .vp-title{
-      font-size:clamp(17px,4.5vw,22px); font-weight:700;
-      color:#fb7185; line-height:1.4;
+      font-size:clamp(19px,5vw,24px); font-weight:700;
+      color:#fb7185; line-height:1.35;
     }
-    #vpLockBlocker .vp-sub{
-      color:#94a3b8; font-size:clamp(13px,3.5vw,15px); line-height:1.6;
-      max-width:340px;
+    #vpLockBlocker .vp-box{
+      background:#0d1829; border:1.5px solid #fb7185;
+      border-radius:14px; padding:16px 20px;
+      max-width:320px; width:100%;
     }
+    #vpLockBlocker .vp-line{
+      color:#e2e8f0; font-size:clamp(13px,3.5vw,15px);
+      line-height:1.7; margin:0;
+    }
+    #vpLockBlocker .vp-line span{
+      color:#fbbf24; font-weight:700;
+    }
+    #vpLockBlocker .vp-sizes{
+      margin-top:10px; padding-top:10px;
+      border-top:1px solid #2b3b5e;
+      display:flex; flex-direction:column; gap:4px;
+    }
+    #vpLockBlocker .vp-sz-row{
+      display:flex; justify-content:space-between;
+      font-size:clamp(12px,3vw,13px); color:#94a3b8;
+    }
+    #vpLockBlocker .vp-sz-row b{ color:#e2e8f0; }
     #vpLockBlocker .vp-warn{
-      margin-top:4px; background:#2d0e16; border:1px solid #fb7185;
-      border-radius:10px; padding:10px 16px;
-      color:#fda4af; font-size:clamp(12px,3vw,14px); font-weight:600;
+      margin-top:4px;
+      background:#1a0a0e; border:1px solid #7f1d1d;
+      border-radius:10px; padding:9px 14px;
+      color:#fda4af; font-size:clamp(11px,3vw,13px); font-weight:600;
+      max-width:320px; width:100%;
     }
   </style>
 </head>
@@ -138,16 +165,26 @@
   <div class="rb-sub">Exam sirf portrait mode me chalta hai.<br>Rotation lock on karke phone seedha pakdein.</div>
 </div>
 
-<!-- ── VIEWPORT LOCK BLOCKER — exam start ke baad resize kiya to yahi dikhega ── -->
+<!-- ── VIEWPORT LOCK BLOCKER ── -->
 <div id="vpLockBlocker">
   <div class="vp-icon">🔒</div>
-  <div class="vp-title">Screen resize detect hua!</div>
-  <div class="vp-sub">
-    Exam ke dauran browser ka size badalna ya<br>
-    chhota karna allowed nahi hai.<br><br>
-    Browser ko wapas original size pe laao.
+  <div class="vp-title">Screen ka size badal gaya!</div>
+  <div class="vp-box">
+    <p class="vp-line">
+      Exam ke dauran browser resize karna<br>
+      <span>allowed nahi hai.</span>
+    </p>
+    <p class="vp-line" style="margin-top:8px;">
+      Browser ko wapas<br>
+      <span>original size pe laao</span><br>
+      — questions wapas dikhenGe.
+    </p>
+    <div class="vp-sizes">
+      <div class="vp-sz-row"><span>Locked size</span><b id="vpLockedSize">—</b></div>
+      <div class="vp-sz-row"><span>Current size</span><b id="vpCurrentSize">—</b></div>
+    </div>
   </div>
-  <div class="vp-warn">⚠ Ye violation report me record ho gaya hai</div>
+  <div class="vp-warn">⚠ Ye violation report me record ho chuka hai</div>
 </div>
 
 <div class="shell">
@@ -351,7 +388,17 @@
 
   // ── Parent se message sunna — viewport_resized / viewport_normal ──
   window.addEventListener("message",e=>{
-    if(e.data==="viewport_resized") setVpLockBlocker(true);
+    if(typeof e.data === "object" && e.data.type === "viewport_resized"){
+      // Locked size aur current size dikhao
+      const ls = e.data.locked;
+      const cs = e.data.current;
+      const lockedEl   = document.getElementById("vpLockedSize");
+      const currentEl  = document.getElementById("vpCurrentSize");
+      if(lockedEl  && ls) lockedEl.textContent  = ls.width  + " × " + ls.height;
+      if(currentEl && cs) currentEl.textContent = cs.width  + " × " + cs.height;
+      setVpLockBlocker(true);
+    }
+    if(e.data==="viewport_resized") setVpLockBlocker(true);  // fallback string
     if(e.data==="viewport_normal")  setVpLockBlocker(false);
   });
 
