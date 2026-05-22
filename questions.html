@@ -13,7 +13,6 @@
       font-family:Arial,sans-serif; background:var(--bg); color:var(--text);
     }
 
-    /* ── Rotation fix: jab landscape ho aur lock na kaam kare ── */
     @media screen and (orientation: landscape) and (max-height: 500px) {
       #rotateBlocker { display:flex !important; }
     }
@@ -105,15 +104,87 @@
     .size-box{ max-width:420px; border:1px solid #334155; border-radius:12px; background:#0b162b; padding:18px; }
     .size-box strong{ display:block; margin-bottom:8px; color:#fda4af; font-size:18px; }
     .size-box span{ color:#cbd5e1; line-height:1.55; font-size:14px; }
+
+    /* ── VIEWPORT LOCK BLOCKER ── */
+    #vpLockBlocker{
+      position:fixed; inset:0; z-index:999998;
+      display:none; flex-direction:column;
+      align-items:center; justify-content:center;
+      background:#040a14; text-align:center; padding:28px; gap:14px;
+    }
+    #vpLockBlocker.show{ display:flex; }
+    #vpLockBlocker .vp-icon{
+      font-size:62px;
+      animation: vp-pulse 1.5s ease-in-out infinite;
+    }
+    @keyframes vp-pulse{
+      0%,100%{ transform:scale(1); opacity:1; }
+      50%{ transform:scale(1.12); opacity:0.8; }
+    }
+    #vpLockBlocker .vp-title{
+      font-size:clamp(19px,5vw,24px); font-weight:700;
+      color:#fb7185; line-height:1.35;
+    }
+    #vpLockBlocker .vp-box{
+      background:#0d1829; border:1.5px solid #fb7185;
+      border-radius:14px; padding:16px 20px;
+      max-width:320px; width:100%;
+    }
+    #vpLockBlocker .vp-line{
+      color:#e2e8f0; font-size:clamp(13px,3.5vw,15px);
+      line-height:1.7; margin:0;
+    }
+    #vpLockBlocker .vp-line span{
+      color:#fbbf24; font-weight:700;
+    }
+    #vpLockBlocker .vp-sizes{
+      margin-top:10px; padding-top:10px;
+      border-top:1px solid #2b3b5e;
+      display:flex; flex-direction:column; gap:4px;
+    }
+    #vpLockBlocker .vp-sz-row{
+      display:flex; justify-content:space-between;
+      font-size:clamp(12px,3vw,13px); color:#94a3b8;
+    }
+    #vpLockBlocker .vp-sz-row b{ color:#e2e8f0; }
+    #vpLockBlocker .vp-warn{
+      margin-top:4px;
+      background:#1a0a0e; border:1px solid #7f1d1d;
+      border-radius:10px; padding:9px 14px;
+      color:#fda4af; font-size:clamp(11px,3vw,13px); font-weight:600;
+      max-width:320px; width:100%;
+    }
   </style>
 </head>
 <body>
 
-<!-- Rotate blocker — landscape pe dikhega -->
+<!-- Rotate blocker -->
 <div id="rotateBlocker">
   <div class="rb-icon">🔄</div>
   <div class="rb-msg">Phone ko seedha (Portrait) karein</div>
   <div class="rb-sub">Exam sirf portrait mode me chalta hai.<br>Rotation lock on karke phone seedha pakdein.</div>
+</div>
+
+<!-- ── VIEWPORT LOCK BLOCKER ── -->
+<div id="vpLockBlocker">
+  <div class="vp-icon">🔒</div>
+  <div class="vp-title">Screen ka size badal gaya!</div>
+  <div class="vp-box">
+    <p class="vp-line">
+      Exam ke dauran browser resize karna<br>
+      <span>allowed nahi hai.</span>
+    </p>
+    <p class="vp-line" style="margin-top:8px;">
+      Browser ko wapas<br>
+      <span>original size pe laao</span><br>
+      — questions wapas dikhenGe.
+    </p>
+    <div class="vp-sizes">
+      <div class="vp-sz-row"><span>Locked size</span><b id="vpLockedSize">—</b></div>
+      <div class="vp-sz-row"><span>Current size</span><b id="vpCurrentSize">—</b></div>
+    </div>
+  </div>
+  <div class="vp-warn">⚠ Ye violation report me record ho chuka hai</div>
 </div>
 
 <div class="shell">
@@ -153,10 +224,9 @@
 <script>
   const SESSION_KEY    = "exam_active_session";
   const ANSWER_KEY_PFX = "exam_answers_";
-  const MIN_EXAM_WIDTH = 360;
-  const MIN_EXAM_HEIGHT = 500; // portrait me height
+  const MIN_EXAM_WIDTH  = 360;
+  const MIN_EXAM_HEIGHT = 500;
 
-  // ── 20 MCQ QUESTIONS ──
   const mcqData = [
     { id:"q1",  kind:"mcq", mcqTitle:"1. The intensity of electric field at any point on the surface of a charged conductor is:", options:{A:"Zero",B:"Perpendicular to the surface",C:"Tangential to the surface",D:"At 45° to the surface"}, correctOption:"B" },
     { id:"q2",  kind:"mcq", mcqTitle:"2. Torque experienced by electric dipole of dipole moment P placed in electric field E is:", options:{A:"P × E",B:"P / E",C:"P · E",D:"None of these"}, correctOption:"A" },
@@ -180,7 +250,6 @@
     { id:"q20", kind:"mcq", mcqTitle:"20. Permittivity (ε₀) of free space is:", options:{A:"9 × 10⁹ mF⁻¹",B:"1.6 × 10⁻¹⁹ C",C:"8.85 × 10⁻¹² Fm⁻¹",D:"None of these"}, correctOption:"C" }
   ];
 
-  // ── 10 SHORT ANSWER QUESTIONS ──
   const subjectiveData = [
     { id:"s1",  kind:"logic", headline:"Short Answer Q1 (3 Marks)", body:"Define electric dipole moment. Write its S.I. unit.\n\n💡 Hint: p = q × 2l, direction −q to +q, unit: C·m" },
     { id:"s2",  kind:"logic", headline:"Short Answer Q2 (3 Marks)", body:"Define Electric Flux and write its S.I. unit.\n\n💡 Hint: Φ = E·A·cosθ, unit: Nm²C⁻¹" },
@@ -194,13 +263,13 @@
     { id:"s10", kind:"logic", headline:"Short Answer Q10 (3 Marks)", body:"State Gauss's Theorem of Electrostatics.\n\n💡 Hint: Φ = Q_enc / ε₀ — write full statement + formula" }
   ];
 
-  const items       = [...mcqData, ...subjectiveData];
-  const mcqItems    = items.filter(it=>it.kind==="mcq");
-  const logicItems  = items.filter(it=>it.kind==="logic");
-  const mcqQuestions= mcqItems.map(it=>({id:it.id,question:it.mcqTitle,options:it.options,correctOption:it.correctOption}));
+  const items      = [...mcqData, ...subjectiveData];
+  const mcqItems   = items.filter(it=>it.kind==="mcq");
+  const logicItems = items.filter(it=>it.kind==="logic");
+  const mcqQuestions = mcqItems.map(it=>({id:it.id,question:it.mcqTitle,options:it.options,correctOption:it.correctOption}));
 
-  const params   = new URLSearchParams(window.location.search);
-  let sessionId  = params.get("session")||localStorage.getItem(SESSION_KEY)||"";
+  const params    = new URLSearchParams(window.location.search);
+  let sessionId   = params.get("session")||localStorage.getItem(SESSION_KEY)||"";
   if(!sessionId) sessionId=`fallback_${Date.now()}`;
   localStorage.setItem(SESSION_KEY,sessionId);
   const storageKey = ANSWER_KEY_PFX+sessionId;
@@ -208,6 +277,9 @@
   let mcqIdx=0, logIdx=0, activeSection="mcq";
   let state={ sessionId, mcqQuestions, answers:{} };
   let focusLossReported=false;
+
+  // ── VIEWPORT LOCK STATE (questions side) ──
+  let vpLocked = false; // parent ne lock signal diya hai ya nahi
 
   function loadState(){ const raw=localStorage.getItem(storageKey); if(!raw)return; try{const p=JSON.parse(raw);if(p&&p.answers)state.answers=p.answers||{};}catch{} }
   function persist(){ localStorage.setItem(storageKey,JSON.stringify({sessionId:state.sessionId,questions:state.mcqQuestions,answers:state.answers,updatedAt:new Date().toISOString()})); document.getElementById("hint").textContent=`Saved ${new Date().toLocaleTimeString()}`; }
@@ -276,25 +348,23 @@
     };
   }
 
-  function isLandscape(){
-    // portrait check: height > width
-    const vp=currentViewport();
-    return vp.width > vp.height;
-  }
-
   function updateSizeBlocker(){
     const vp=currentViewport();
-    // landscape me rotate blocker handle kar raha hai, yahan sirf portrait-too-small check
     const portrait=vp.height>=vp.width;
     const tooSmall=portrait&&(vp.width<MIN_EXAM_WIDTH||vp.height<MIN_EXAM_HEIGHT);
     document.getElementById("sizeBlocker").classList.toggle("show",tooSmall);
   }
 
-  // Rotation detect karo — CSS media query se handle ho raha hai but JS se bhi ensure karo
   function checkOrientation(){
     const vp=currentViewport();
     const landscape=vp.width>vp.height&&vp.height<500;
     document.getElementById("rotateBlocker").style.display=landscape?"flex":"";
+  }
+
+  // ── VIEWPORT LOCK BLOCKER control ──
+  function setVpLockBlocker(show){
+    vpLocked = show;
+    document.getElementById("vpLockBlocker").classList.toggle("show", show);
   }
 
   document.getElementById("optsBox").addEventListener("change",e=>{
@@ -315,6 +385,23 @@
   function postToParent(msg){
     if(window.parent&&window.parent!==window) window.parent.postMessage(msg,"*");
   }
+
+  // ── Parent se message sunna — viewport_resized / viewport_normal ──
+  window.addEventListener("message",e=>{
+    if(typeof e.data === "object" && e.data.type === "viewport_resized"){
+      // Locked size aur current size dikhao
+      const ls = e.data.locked;
+      const cs = e.data.current;
+      const lockedEl   = document.getElementById("vpLockedSize");
+      const currentEl  = document.getElementById("vpCurrentSize");
+      if(lockedEl  && ls) lockedEl.textContent  = ls.width  + " × " + ls.height;
+      if(currentEl && cs) currentEl.textContent = cs.width  + " × " + cs.height;
+      setVpLockBlocker(true);
+    }
+    if(e.data==="viewport_resized") setVpLockBlocker(true);  // fallback string
+    if(e.data==="viewport_normal")  setVpLockBlocker(false);
+  });
+
   window.addEventListener("blur",()=>{ if(focusLossReported)return; focusLossReported=true; postToParent("exam_focus_lost"); });
   window.addEventListener("focus",()=>{ if(focusLossReported){ focusLossReported=false; postToParent("exam_focus_returned"); } });
 
